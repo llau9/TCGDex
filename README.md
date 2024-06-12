@@ -1,0 +1,1 @@
+Automatic TCG Card Identifier
