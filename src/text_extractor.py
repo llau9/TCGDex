@@ -16,58 +16,81 @@ class TextExtractor:
     @staticmethod
     def extract_text_from_name(region):
         gray = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY) if len(region.shape) == 3 else region
-        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        kernel = np.ones((1,1), np.uint8)
+        gray = cv2.dilate(thresh, kernel, iterations = 1)
+        kernel = np.ones((1,1), np.uint8)
+        gray = cv2.erode(gray, kernel, iterations = 1)
+        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+        gray = cv2.medianBlur(gray, 3)
+
+        gray = cv2.bitwise_not(gray)
+        kernel = np.ones((2,2), np.uint8)
+        gray = cv2.erode(gray, kernel, iterations = 1)
+        gray = cv2.bitwise_not(gray)
+
+        scale_factor = 5 # Reduced from 2 to 1.5
+        scaled_thresh = cv2.resize(thresh, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LINEAR)
         plt.figure(figsize=(10, 10))
-        plt.imshow(thresh, cmap='gray')  # Display the image in grayscale
+        plt.imshow(scaled_thresh, cmap='gray')  # Display the image in grayscale
         plt.title('Processed Image with Defined Regions')
         plt.show()
-        text = pytesseract.image_to_string(thresh, lang='eng', config='--psm 7 --oem 1')
+        text = pytesseract.image_to_string(scaled_thresh, lang='eng', config='--psm 7 --oem 1')
         return text.strip()
     
     @staticmethod
     def extract_text_from_hp(region):
         # Convert to grayscale
         gray = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY) if len(region.shape) == 3 else region
-        
-        # Apply a smaller Gaussian blur to the grayscale image to reduce noise while preserving details
-        blur = cv2.GaussianBlur(gray, (3, 3), 0)  # Reduced kernel size from (5,5) to (3,3)
-        
-        # Use adaptive thresholding which may be better suited for varying lighting conditions
-        thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-        
-        # Slightly decrease the text size increase to prevent over-scaling
-        scale_factor = 5 # Reduced from 2 to 1.5
-        scaled_thresh = cv2.resize(thresh, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LINEAR)
-        
-        # Fine-tuning noise removal using morphological operations
-        kernel = np.ones((2,2), np.uint8)  # Reduced kernel size for less aggressive morphological operations
-        opening = cv2.morphologyEx(scaled_thresh, cv2.MORPH_OPEN, kernel, iterations=1)
-        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel, iterations=1)
+        _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        # Display the processed image before OCR
-        plt.figure(figsize=(10, 10))
-        plt.imshow(closing, cmap='gray')  # Display the image in grayscale
-        plt.title('Processed Image with Defined Regions')
-        plt.show()
+        kernel = np.ones((1,1), np.uint8)
+        gray = cv2.dilate(thresh, kernel, iterations = 1)
+        kernel = np.ones((1,1), np.uint8)
+        gray = cv2.erode(gray, kernel, iterations = 1)
+        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+        gray = cv2.medianBlur(gray, 3)
+
+        gray = cv2.bitwise_not(gray)
+        kernel = np.ones((2,2), np.uint8)
+        gray = cv2.erode(gray, kernel, iterations = 1)
+        gray = cv2.bitwise_not(gray)
 
         # Use PSM 7 for single line text and OEM 3 for LSTM engine
         config = '--psm 7 --oem 3'
-
+        scale_factor = 5 # Reduced from 2 to 1.5
+        scaled_thresh = cv2.resize(thresh, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LINEAR)
         # Extract text using Tesseract
-        text = pytesseract.image_to_string(closing, lang='eng', config=config)
+        text = pytesseract.image_to_string(scaled_thresh, lang='eng', config=config)
+        plt.figure(figsize=(10, 10))
+        plt.imshow(scaled_thresh, cmap='gray')  # Display the image in grayscale
+        plt.title('Processed Image with Defined Regions')
+        plt.show()
         return text.strip()
-    
+
     @staticmethod
     def extract_text_from_moves(region):
         gray = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY) if len(region.shape) == 3 else region
-        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        text = pytesseract.image_to_string(thresh, lang='eng', config='--psm 12 --oem 1')
+        _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        kernel = np.ones((1,1), np.uint8)
+        gray = cv2.dilate(thresh, kernel, iterations = 1)
+        kernel = np.ones((1,1), np.uint8)
+        gray = cv2.erode(gray, kernel, iterations = 1)
+        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+        gray = cv2.medianBlur(gray, 3)
+
+        gray = cv2.bitwise_not(gray)
+        kernel = np.ones((2,2), np.uint8)
+        gray = cv2.erode(gray, kernel, iterations = 1)
+        gray = cv2.bitwise_not(gray)
+
+        text = pytesseract.image_to_string(thresh, lang='eng', config='--psm 11 --oem 1')
         plt.figure(figsize=(10, 10))
         plt.imshow(thresh, cmap='gray')  # Display the image in grayscale
         plt.title('Processed Image with Defined Regions')
         plt.show()
         return text.strip()
-
 
     @staticmethod
     def prepare_features(dataset):
@@ -90,6 +113,18 @@ class TextExtractor:
 
         # Remove any non-numeric characters, assuming HP is numeric
         hp_text = ''.join(filter(str.isdigit, hp_text))
+
+        if len(hp_text) > 3:
+            if hp_text[0] != '1':
+                # If it's longer than three digits and the first digit is not 1,
+                # truncate to the first two digits
+                hp_text = hp_text[:2]
+            else:
+                # If the first digit is 1, allow up to three digits
+                hp_text = hp_text[:3]
+        elif len(hp_text) == 3 and hp_text[0] != '1':
+            # If it's exactly three digits but the first is not 1, also truncate to two digits
+            hp_text = hp_text[:2]
 
         return hp_text
     
