@@ -152,7 +152,7 @@ class ImagePreprocessor:
 
         contoured = img.copy()
 
-        cv2.drawContours(contoured, [hull], -1, (255,0,255), 3)
+        cv2.drawContours(contoured, [hull], -1, (255,0,255), 30)
         # Display processed regions
         plt.figure(figsize=(10, 10))
         plt.imshow(cv2.cvtColor(contoured, cv2.COLOR_BGR2RGB))

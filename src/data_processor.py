@@ -25,7 +25,7 @@ class ImageDownloader:
             print(f"Error downloading {url}: {e}")
             return None
 
-    def load_dataset_images(self, max_images=40):
+    def load_dataset_images(self, max_images=100):
         dataset_file_path = os.path.join(self.download_dir, 'dataset.json')
         existing_dataset = []
 
