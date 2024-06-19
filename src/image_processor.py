@@ -198,13 +198,18 @@ class ImagePreprocessor:
         name_region_coords = (5, 0, 400, 90)
         hp_region_coords = (400, 0, 600, 90)
         move_region_coords = (10, 420, 590, 730)
+        set_symbol_region_coords = (10, 730, 590, 825)  # New region for set symbol
 
         name_region = normalized_image[0:90, 5:400]
         hp_region = normalized_image[0:90, 400:600]
         move_region = normalized_image[420:730, 10:590]
+        set_symbol_region = normalized_image[730:825, 10:590]  # Extracting the new region
+
 
         cv2.rectangle(normalized_image, name_region_coords[:2], name_region_coords[2:], (255, 0, 0), 2)
         cv2.rectangle(normalized_image, hp_region_coords[:2], hp_region_coords[2:], (0, 255, 0), 2)
         cv2.rectangle(normalized_image, move_region_coords[:2], move_region_coords[2:], (0, 0, 255), 2)
+        cv2.rectangle(normalized_image, set_symbol_region_coords[:2], set_symbol_region_coords[2:], (255, 255, 0), 2)  # Drawing the new region
 
-        return normalized_image, name_region, hp_region, move_region
+
+        return normalized_image, name_region, hp_region, move_region, set_symbol_region

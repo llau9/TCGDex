@@ -24,7 +24,7 @@ if len(images) > 0:
     image_path = image_info['image_path']  # Extract the path of the downloaded image
 
     # Process the image to isolate regions
-    processed_image, name_region, hp_region, move_region = preprocessor.isolate_regions(image_path)
+    processed_image, name_region, hp_region, move_region, _ = preprocessor.isolate_regions(image_path)
 
     # Display the processed image with defined regions
     plt.figure(figsize=(10, 10))
