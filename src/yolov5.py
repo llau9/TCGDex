@@ -51,18 +51,3 @@ class CardDetector:
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         plt.title('Detected Pokémon Cards')
         plt.show()
-
-def main():
-    model_path = 'yolov5s.pt'  # Path to the YOLOv5 model weights
-    dataset_path = 'pokemon-tcg-data-master 1999-2023.csv'
-    image_dir = 'images'
-    
-    model = YOLOv5Model(model_path=model_path)
-    detector = CardDetector(model, dataset_path, image_dir)
-    
-    sample_image_path = os.path.join(image_dir, 'sample.jpg')  # Provide the path to a sample image
-    results = detector.detect_cards(sample_image_path)
-    detector.visualize_detections(sample_image_path, results)
-
-if __name__ == "__main__":
-    main()
