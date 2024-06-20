@@ -1,3 +1,4 @@
+from yolov5 import YOLOv5Model, CardDetector
 from data_processor import ImageDownloader
 from image_processor import ImagePreprocessor
 from text_extractor2 import TextExtractor
@@ -7,40 +8,34 @@ import matplotlib.pyplot as plt
 #from sklearn.ensemble import RandomForestClassifier
 #from sklearn.metrics import classification_report
 
-downloader = ImageDownloader('PokemonCards/train.csv')
-preprocessor = ImagePreprocessor()
-textExtractor = TextExtractor()
+def main():
+    # Initialize the downloader
+    downloader = ImageDownloader('PokemonCards/train.csv')
 
-images = downloader.load_dataset_images()
+    # Initialize YOLOv5 model
+    yolov5_model = YOLOv5Model(model_path='yolov5s.pt')
 
-# Check the number of images downloaded
-print(f"Number of images downloaded: {len(images)}")
+    # Initialize CardDetector with YOLOv5 model
+    detector = CardDetector(model=yolov5_model, dataset_path='PokemonCards/train.csv')
 
-# Optionally, display one of the images to ensure it's downloaded correctly
+    # Download images
+    images = downloader.load_dataset_images()
 
-# Check the number of images downloaded and ensure at least one is available
-if len(images) > 0:
-    image_info = images[20]  # Get the first image information
-    image_path = image_info['image_path']  # Extract the path of the downloaded image
+    # Check the number of images downloaded
+    print(f"Number of images downloaded: {len(images)}")
 
-    # Process the image to isolate regions
-    processed_image, name_region, hp_region, move_region, _ = preprocessor.isolate_regions(image_path)
+    # Optionally, display one of the images to ensure it's downloaded correctly
+    if len(images) > 0:
+        image_info = images[0]  # Get the first image information
+        image_path = image_info['image_path']  # Extract the path of the downloaded image
 
-    # Display the processed image with defined regions
-    plt.figure(figsize=(10, 10))
-    plt.imshow(cv2.cvtColor(hp_region, cv2.COLOR_BGR2RGB))  # Convert BGR to RGB for displaying
-    plt.title('Processed Image with Defined Regions')
-    plt.show()
+        # Run detection using YOLOv5
+        results = detector.detect_cards(image_path)
 
-    name = textExtractor.extract_text_from_name(name_region)
-    hp = textExtractor.extract_text_from_hp(hp_region)
-    moves = textExtractor.extract_text_from_moves(move_region)
+        # Visualize detections
+        detector.visualize_detections(image_path, results)
+    else:
+        print("No images were downloaded.")
 
-    print("Extracted Name Text:", textExtractor.post_process_text(name))
-    print("Extracted HP Text:", textExtractor.post_process_hp_text(hp))
-    print("Extracted MoveText:", textExtractor.post_process_text(moves))
-
-else:
-    print("No images were downloaded.")
-
-
+if __name__ == "__main__":
+    main()
