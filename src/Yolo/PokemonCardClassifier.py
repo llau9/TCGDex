@@ -16,7 +16,7 @@ import numpy as np
 
 # YOLOv5 dependencies
 from yolov5.models.experimental import attempt_load
-from yolov5.utils.datasets import LoadImages
+from yolov5.utils.augmentations import LoadImages
 from yolov5.utils.general import non_max_suppression, scale_coords
 
 class PokemonCardClassifier:
