@@ -1,4 +1,3 @@
-from yolov5 import YOLOv5Model, CardDetector
 from data_processor import ImageDownloader
 from image_processor import ImagePreprocessor
 from text_extractor2 import TextExtractor
