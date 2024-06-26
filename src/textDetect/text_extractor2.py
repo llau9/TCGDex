@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from data_processor import ImageDownloader
+from textDetect.data_processor import ImageDownloader
 from PIL import Image
 import pandas as pd
 import easyocr

@@ -1,8 +1,8 @@
 import json
 from fuzzywuzzy import process
-from data_processor import ImageDownloader
-from image_processor import ImagePreprocessor
-from text_extractor2 import TextExtractor
+from textDetect.data_processor import ImageDownloader
+from textDetect.image_processor import ImagePreprocessor
+from textDetect.text_extractor2 import TextExtractor
 
 
 class CardMatcher:

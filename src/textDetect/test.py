@@ -1,6 +1,6 @@
-from data_processor import ImageDownloader
-from image_processor import ImagePreprocessor
-from text_extractor2 import TextExtractor
+from textDetect.data_processor import ImageDownloader
+from textDetect.image_processor import ImagePreprocessor
+from textDetect.text_extractor2 import TextExtractor
 import cv2
 import matplotlib.pyplot as plt
 #from sklearn.model_selection import train_test_split

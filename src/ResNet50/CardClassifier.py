@@ -9,7 +9,7 @@ from PIL import Image
 import torch
 from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader, random_split
-from image_processor import ImagePreprocessor
+from textDetect.image_processor import ImagePreprocessor
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import torch.optim as optim
