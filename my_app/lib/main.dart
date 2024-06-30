@@ -3,7 +3,8 @@ import 'portfolio_page.dart';
 import 'profile_page.dart';
 import 'camera_page.dart';
 import 'social_page.dart';
-import 'sign_in_page.dart'; // Import the SignInPage
+import 'sign_in_page.dart';
+import 'settings_page.dart'; // Import the SettingsPage
 
 void main() {
   runApp(MyApp());
@@ -117,7 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: Icon(Icons.settings),
               title: Text('Settings'),
               onTap: () {
-                // Handle settings action
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
               },
             ),
             ListTile(
@@ -204,4 +208,3 @@ class HomeCard extends StatelessWidget {
     );
   }
 }
-
