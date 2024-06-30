@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'portfolio_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -29,8 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
   static List<Widget> _widgetOptions = <Widget>[
     HomeContent(),
     Text('Market Page'),
-    PortfolioPage(),
-    Text('Profile Page'),
+    Text('Portfolio Page'),
+    ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -43,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Title'),
+        title: Text('TCGDex'),
         actions: [
           IconButton(
             icon: Icon(Icons.search),
@@ -127,3 +126,56 @@ class HomeCard extends StatelessWidget {
     );
   }
 }
+
+class ProfilePage extends StatelessWidget {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  bool _notificationsEnabled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Profile Page'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: <Widget>[
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            SizedBox(height: 16.0),
+            TextField(
+              controller: usernameController,
+              decoration: InputDecoration(labelText: 'Username'),
+            ),
+            SizedBox(height: 16.0),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+            SizedBox(height: 16.0),
+            SwitchListTile(
+              title: Text('Enable Notifications'),
+              value: _notificationsEnabled,
+              onChanged: (bool value) {
+                _notificationsEnabled = value;
+              },
+            ),
+            SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                // Handle logout functionality
+              },
+              child: Text('Logout'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
