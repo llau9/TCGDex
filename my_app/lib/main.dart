@@ -3,6 +3,7 @@ import 'portfolio_page.dart';
 import 'profile_page.dart';
 import 'camera_page.dart';
 import 'social_page.dart';
+import 'sign_in_page.dart'; // Import the SignInPage
 
 void main() {
   runApp(MyApp());
@@ -103,6 +104,16 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
+              leading: Icon(Icons.login),
+              title: Text('Sign In'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignInPage()),
+                );
+              },
+            ),
+            ListTile(
               leading: Icon(Icons.settings),
               title: Text('Settings'),
               onTap: () {
@@ -193,3 +204,4 @@ class HomeCard extends StatelessWidget {
     );
   }
 }
+
