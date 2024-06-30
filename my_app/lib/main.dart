@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'portfolio_page.dart';
+import 'profile_page.dart';
+import 'camera_page.dart';
+import 'social_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -11,6 +15,15 @@ class MyApp extends StatelessWidget {
       title: 'Modern UI App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        appBarTheme: AppBarTheme(
+          color: Colors.blue,
+          iconTheme: IconThemeData(color: Colors.white), // Set icon color to white
+          actionsIconTheme: IconThemeData(color: Colors.white), // Set actions icon color to white
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey, // Set unselected item color
+        ),
       ),
       home: HomeScreen(),
     );
@@ -28,8 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
   static List<Widget> _widgetOptions = <Widget>[
     HomeContent(),
     Text('Market Page'),
-    Text('Portfolio Page'),
-    ProfilePage(),
+    CameraPage(), // Correctly placing CameraPage here
+    PortfolioPage(), // Correctly placing PortfolioPage here
+    SocialPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -43,20 +57,67 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('TCGDex'),
+        leading: IconButton(
+          icon: Icon(Icons.search),
+          onPressed: () {
+            // Handle search action
+          },
+        ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              // Handle search action
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.account_circle),
-            onPressed: () {
-              // Handle account settings
+          Builder(
+            builder: (context) {
+              return IconButton(
+                icon: Icon(Icons.menu),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer();
+                },
+              );
             },
           ),
         ],
+      ),
+      endDrawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'Account Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.account_circle),
+              title: Text('Profile'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Settings'),
+              onTap: () {
+                // Handle settings action
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Sign Out'),
+              onTap: () {
+                // Handle sign out action
+              },
+            ),
+          ],
+        ),
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
@@ -72,17 +133,23 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Market',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.camera_alt),
+            label: 'Camera',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.pie_chart),
             label: 'Portfolio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.group),
+            label: 'Social',
           ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey, // Ensure unselected item color is set
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed, // Ensure the items are evenly spaced
       ),
     );
   }
@@ -126,56 +193,3 @@ class HomeCard extends StatelessWidget {
     );
   }
 }
-
-class ProfilePage extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  bool _notificationsEnabled = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile Page'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: <Widget>[
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: 'Name'),
-            ),
-            SizedBox(height: 16.0),
-            TextField(
-              controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
-            ),
-            SizedBox(height: 16.0),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            SizedBox(height: 16.0),
-            SwitchListTile(
-              title: Text('Enable Notifications'),
-              value: _notificationsEnabled,
-              onChanged: (bool value) {
-                _notificationsEnabled = value;
-              },
-            ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                // Handle logout functionality
-              },
-              child: Text('Logout'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
