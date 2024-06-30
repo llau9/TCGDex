@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'portfolio_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -28,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static List<Widget> _widgetOptions = <Widget>[
     HomeContent(),
     Text('Market Page'),
-    Text('Portfolio Page'),
+    PortfolioPage(),
     Text('Profile Page'),
   ];
 
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TCGDex'),
+        title: Text('Title'),
         actions: [
           IconButton(
             icon: Icon(Icons.search),
