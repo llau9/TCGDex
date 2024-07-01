@@ -9,8 +9,80 @@ class SocialPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Social'),
       ),
-      body: const Center(
-        child: Text('Social Page'),
+      body: ListView.builder(
+        itemCount: 10, // Number of posts
+        itemBuilder: (context, index) {
+          return PostCard(
+            username: 'User $index',
+            content: 'This is the content of post $index.',
+          );
+        },
+      ),
+    );
+  }
+}
+
+class PostCard extends StatelessWidget {
+  final String username;
+  final String content;
+
+  const PostCard({
+    required this.username,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Text(username[0]), // Display the first letter of the username
+                ),
+                const SizedBox(width: 10.0),
+                Text(
+                  username,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10.0),
+            Text(content),
+            const SizedBox(height: 10.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.thumb_up),
+                  onPressed: () {
+                    // Handle like action
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.comment),
+                  onPressed: () {
+                    // Handle comment action
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.share),
+                  onPressed: () {
+                    // Handle share action
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
