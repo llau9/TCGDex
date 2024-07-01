@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'main.dart'; // Ensure HomeScreen is correctly imported
-
+import 'home_screen.dart'; // Ensure HomeScreen is correctly imported
 
 class SignInPage extends StatefulWidget {
   @override
@@ -11,10 +10,10 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   bool isSignIn = true;
 
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
   final TextEditingController signInEmailOrUsernameController = TextEditingController();
   final TextEditingController signInPasswordController = TextEditingController();
