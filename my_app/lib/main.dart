@@ -5,6 +5,7 @@ import 'camera_page.dart';
 import 'social_page.dart';
 import 'sign_in_page.dart';
 import 'settings_page.dart'; // Import the SettingsPage
+import 'market_page.dart'; // Import the MarketPage
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'firebase_options.dart'; // Import Firebase options
 
@@ -48,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static List<Widget> _widgetOptions = <Widget>[
     HomeContent(),
-    Text('Market Page'),
+    MarketPage(), // Correctly placing MarketPage here
     CameraPage(), // Correctly placing CameraPage here
     PortfolioPage(), // Correctly placing PortfolioPage here
     SocialPage(),
