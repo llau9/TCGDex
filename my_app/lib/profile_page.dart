@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'sign_in_page.dart'; // Ensure this is correctly imported
 
 class ProfilePage extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  bool _notificationsEnabled = false;
+  ProfilePage({Key? key}) : super(key: key);
 
-  ProfilePage({super.key});
+  final User? user = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -18,32 +17,24 @@ class ProfilePage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: <Widget>[
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text(user?.displayName ?? 'No username'),
+              subtitle: Text('Username'),
             ),
             const SizedBox(height: 16.0),
-            TextField(
-              controller: usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 16.0),
-            SwitchListTile(
-              title: const Text('Enable Notifications'),
-              value: _notificationsEnabled,
-              onChanged: (bool value) {
-                _notificationsEnabled = value;
-              },
+            ListTile(
+              leading: Icon(Icons.email),
+              title: Text(user?.email ?? 'No email'),
+              subtitle: Text('Email'),
             ),
             const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: () {
-                // Handle logout functionality
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => SignInPage()),
+                );
               },
               child: const Text('Logout'),
             ),
