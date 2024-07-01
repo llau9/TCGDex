@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
@@ -13,14 +15,14 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: const Text('Settings'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: <Widget>[
             SwitchListTile(
-              title: Text('Enable Notifications'),
+              title: const Text('Enable Notifications'),
               value: _notificationsEnabled,
               onChanged: (bool value) {
                 setState(() {
@@ -29,7 +31,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             SwitchListTile(
-              title: Text('Enable Dark Mode'),
+              title: const Text('Enable Dark Mode'),
               value: _darkModeEnabled,
               onChanged: (bool value) {
                 setState(() {
@@ -37,15 +39,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 });
               },
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () {
                 // Handle delete account functionality
               },
-              child: Text('Delete Account'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red, // Set the background color to red
               ),
+              child: const Text('Delete Account'),
             ),
           ],
         ),
