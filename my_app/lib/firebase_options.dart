@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'tcgdex-2b2e5.appspot.com',
     measurementId: 'G-QMJB1F5XVL',
   );
+
 }
