@@ -5,15 +5,9 @@ import 'camera_page.dart';
 import 'social_page.dart';
 import 'sign_in_page.dart';
 import 'settings_page.dart'; // Import the SettingsPage
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Import the Firebase options
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(MyApp());
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -46,12 +40,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  static List<Widget> _widgetOptions = <Widget>[
-    HomeContent(),
-    Text('Market Page'),
-    CameraPage(), // Correctly placing CameraPage here
-    PortfolioPage(), // Correctly placing PortfolioPage here
-    SocialPage(),
+  static final List<Widget> _widgetOptions = <Widget>[
+    const HomeContent(),
+    const Text('Market Page'),
+    const CameraPage(), // Correctly placing CameraPage here
+    const PortfolioPage(), // Correctly placing PortfolioPage here
+    const SocialPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -111,17 +105,17 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.login),
-              title: Text('Sign In'),
+              leading: const Icon(Icons.login),
+              title: const Text('Sign In'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SignInPage()),
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
                 );
               },
             ),
             ListTile(
-              leading: Icon(Icons.settings),
+              leading: const Icon(Icons.settings),
               title: const Text('Settings'),
               onTap: () {
                 Navigator.push(
@@ -177,13 +171,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
-
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: const <Widget>[
+      padding: EdgeInsets.all(16.0),
+      children: <Widget>[
         HomeCard(title: 'Set 1'),
         SizedBox(height: 16.0),
         HomeCard(title: 'Set 2'),
@@ -197,7 +189,7 @@ class HomeContent extends StatelessWidget {
 class HomeCard extends StatelessWidget {
   final String title;
 
-  const HomeCard({super.key, required this.title});
+  HomeCard({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +202,7 @@ class HomeCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Text(
           title,
-          style: const TextStyle(fontSize: 18.0),
+          style: TextStyle(fontSize: 18.0),
         ),
       ),
     );
