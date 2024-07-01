@@ -10,7 +10,7 @@ class MarketPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Camera'),
         leading: IconButton(
-          icon: Icon(Icons.search),
+          icon: const Icon(Icons.search),
           onPressed: () {
             // Handle search action
           },
@@ -19,7 +19,7 @@ class MarketPage extends StatelessWidget {
           Builder(
             builder: (context) {
               return IconButton(
-                icon: Icon(Icons.menu),
+                icon: const Icon(Icons.menu),
                 onPressed: () {
                   Scaffold.of(context).openEndDrawer();
                 },
@@ -32,7 +32,7 @@ class MarketPage extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
+            const DrawerHeader(
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
@@ -45,8 +45,8 @@ class MarketPage extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: Icon(Icons.account_circle),
-              title: Text('Profile'),
+              leading: const Icon(Icons.account_circle),
+              title: const Text('Profile'),
               onTap: () {
                 Navigator.push(
                   context,
@@ -55,15 +55,15 @@ class MarketPage extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Settings'),
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
               onTap: () {
                 // Handle settings action
               },
             ),
             ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Sign Out'),
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
               onTap: () {
                 // Handle sign out action
               },
@@ -79,26 +79,26 @@ class MarketPage extends StatelessWidget {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
             ),
-            SizedBox(height: 16.0),
-            Text(
+            const SizedBox(height: 16.0),
+            const Text(
               'Wishlist / Needed Cards for Collection',
               style: TextStyle(
                 fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16.0),
-            Container(
+            const SizedBox(height: 16.0),
+            SizedBox(
               height: 150.0,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                children: <Widget>[
+                children: const <Widget>[
                   WishlistCard(),
                   WishlistCard(),
                   WishlistCard(),
@@ -106,21 +106,21 @@ class MarketPage extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 16.0),
-            Text(
+            const SizedBox(height: 16.0),
+            const Text(
               'Featured Sponsored Storefronts',
               style: TextStyle(
                 fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 16.0,
                 mainAxisSpacing: 16.0,
-                children: <Widget>[
+                children: const <Widget>[
                   StorefrontCard(),
                   StorefrontCard(),
                   StorefrontCard(),
@@ -136,10 +136,12 @@ class MarketPage extends StatelessWidget {
 }
 
 class WishlistCard extends StatelessWidget {
+  const WishlistCard({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Container(
+    return const Card(
+      child: SizedBox(
         width: 120.0,
         child: Center(
           child: Text('Wishlist Item'),
@@ -150,9 +152,11 @@ class WishlistCard extends StatelessWidget {
 }
 
 class StorefrontCard extends StatelessWidget {
+  const StorefrontCard({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return const Card(
       child: Center(
         child: Text('Storefront Item'),
       ),

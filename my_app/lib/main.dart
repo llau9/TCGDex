@@ -5,9 +5,15 @@ import 'camera_page.dart';
 import 'social_page.dart';
 import 'sign_in_page.dart';
 import 'settings_page.dart'; // Import the SettingsPage
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
+import 'firebase_options.dart'; // Import Firebase options
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -40,12 +46,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  static final List<Widget> _widgetOptions = <Widget>[
-    const HomeContent(),
-    const Text('Market Page'),
-    const CameraPage(), // Correctly placing CameraPage here
-    const PortfolioPage(), // Correctly placing PortfolioPage here
-    const SocialPage(),
+  static List<Widget> _widgetOptions = <Widget>[
+    HomeContent(),
+    Text('Market Page'),
+    CameraPage(), // Correctly placing CameraPage here
+    PortfolioPage(), // Correctly placing PortfolioPage here
+    SocialPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -105,28 +111,28 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.login),
-              title: const Text('Sign In'),
+              leading: Icon(Icons.login),
+              title: Text('Sign In'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SignInPage()),
+                  MaterialPageRoute(builder: (context) => SignInPage()),
                 );
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+              leading: Icon(Icons.settings),
+              title: Text('Settings'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
             ),
             ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign Out'),
+              leading: Icon(Icons.logout),
+              title: Text('Sign Out'),
               onTap: () {
                 // Handle sign out action
               },

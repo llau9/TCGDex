@@ -54,7 +54,7 @@ class _CameraPageState extends State<CameraPage> {
       await _controller.takePicture();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Picture taken!')),
+        const SnackBar(content: Text('Picture taken!')),
       );
 
     } catch (e) {
@@ -65,19 +65,19 @@ class _CameraPageState extends State<CameraPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Camera')),
+      appBar: AppBar(title: const Text('Camera')),
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             return CameraPreview(_controller);
           } else {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
         },
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.camera),
+        child: const Icon(Icons.camera),
         onPressed: () => _takePicture(context),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
