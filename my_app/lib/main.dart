@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'firebase_options.dart';
 import 'sign_in_page.dart';
-import 'home_screen.dart'; // Import the HomeScreen
+import 'home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const AuthWrapper(), // Use AuthWrapper as the home
+      home: const AuthWrapper(),
     );
   }
 }
@@ -40,9 +41,9 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          return const HomeScreen(); // Navigate to home screen if user is signed in
+          return const HomeScreen();
         }
-        return const SignInPage(); // Navigate to sign-in page if user is not signed in
+        return const SignInPage();
       },
     );
   }

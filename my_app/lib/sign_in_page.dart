@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart'; // Ensure HomeScreen is correctly imported
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'home_screen.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({Key? key}) : super(key: key);
@@ -21,6 +22,7 @@ class _SignInPageState extends State<SignInPage> {
   final TextEditingController signInPasswordController = TextEditingController();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void signIn() async {
     try {
@@ -46,7 +48,18 @@ class _SignInPageState extends State<SignInPage> {
         email: emailController.text,
         password: passwordController.text,
       );
+
       await userCredential.user?.updateDisplayName(nameController.text);
+
+      // Create a new document for the user in the 'users' collection
+      await _firestore.collection('users').doc(userCredential.user?.uid).set({
+        'name': nameController.text,
+        'username': usernameController.text,
+        'email': emailController.text,
+        'portfolio': [],
+        // Add other fields as needed
+      });
+
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()));
     } catch (e) {
