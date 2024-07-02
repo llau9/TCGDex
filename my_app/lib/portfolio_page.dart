@@ -1,37 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-class PortfolioPage extends StatefulWidget {
+class PortfolioPage extends StatelessWidget {
   const PortfolioPage({super.key});
-
-  @override
-  _PortfolioPageState createState() => _PortfolioPageState();
-}
-
-class _PortfolioPageState extends State<PortfolioPage> {
-  String userName = "Anonymous";
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserName();
-  }
-
-  Future<void> _fetchUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    setState(() {
-      userName = user?.displayName ?? "Anonymous";
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      // Removed the AppBar from here
+      body: const SingleChildScrollView(
         child: Column(
           children: [
-            ProfileSection(userName: userName),
-            const CardsGridSection(),
+            ProfileSection(),
+            CardsGridSection(),
           ],
         ),
       ),
@@ -40,9 +20,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 }
 
 class ProfileSection extends StatelessWidget {
-  final String userName;
-
-  const ProfileSection({super.key, required this.userName});
+  const ProfileSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +36,7 @@ class ProfileSection extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(userName, style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
+              const Text('Jayle Proffiec', style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
               Text('Level 12', style: TextStyle(color: Colors.grey[600])),
               Text('360/500 XP', style: TextStyle(color: Colors.grey[600])),
             ],

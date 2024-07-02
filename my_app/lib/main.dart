@@ -24,12 +24,12 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         appBarTheme: const AppBarTheme(
           color: Colors.blue,
-          iconTheme: IconThemeData(color: Colors.white), // Set icon color to white
-          actionsIconTheme: IconThemeData(color: Colors.white), // Set actions icon color to white
+          iconTheme: IconThemeData(color: Colors.white),
+          actionsIconTheme: IconThemeData(color: Colors.white),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           selectedItemColor: Colors.blue,
-          unselectedItemColor: Colors.grey, // Set unselected item color
+          unselectedItemColor: Colors.grey,
         ),
       ),
       home: const AuthWrapper(),
