@@ -13,7 +13,6 @@ class PortfolioPage extends StatelessWidget {
         child: Column(
           children: [
             ProfileSection(),
-            FilterAndSymbolsSection(),
             CardsGridSection(),
           ],
         ),
@@ -42,36 +41,6 @@ class ProfileSection extends StatelessWidget {
               const Text('Jayle Proffiec', style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
               Text('Level 12', style: TextStyle(color: Colors.grey[600])),
               Text('360/500 XP', style: TextStyle(color: Colors.grey[600])),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class FilterAndSymbolsSection extends StatelessWidget {
-  const FilterAndSymbolsSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.filter_list),
-            label: const Text('Filter'),
-          ),
-          const Row(
-            children: [
-              Icon(Icons.star, color: Colors.amber),
-              SizedBox(width: 4.0),
-              Icon(Icons.access_time, color: Colors.grey),
-              SizedBox(width: 4.0),
-              Icon(Icons.favorite, color: Colors.red),
             ],
           ),
         ],

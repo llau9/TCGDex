@@ -4,11 +4,11 @@ import 'profile_page.dart'; // Ensure this import is added
 class MarketPage extends StatelessWidget {
   const MarketPage({super.key});
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Camera'),
+        title: const Text('TCGDex'),
         leading: IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {
