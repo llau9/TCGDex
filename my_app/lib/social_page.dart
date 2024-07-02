@@ -26,7 +26,7 @@ class PostCard extends StatelessWidget {
   final String username;
   final String content;
 
-  const PostCard({
+  const PostCard({super.key, 
     required this.username,
     required this.content,
   });
@@ -49,7 +49,7 @@ class PostCard extends StatelessWidget {
                 const SizedBox(width: 10.0),
                 Text(
                   username,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -62,19 +62,19 @@ class PostCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.thumb_up),
+                  icon: const Icon(Icons.thumb_up),
                   onPressed: () {
                     // Handle like action
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.comment),
+                  icon: const Icon(Icons.comment),
                   onPressed: () {
                     // Handle comment action
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.share),
+                  icon: const Icon(Icons.share),
                   onPressed: () {
                     // Handle share action
                   },

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'sign_in_page.dart';
 
 class ProfilePage extends StatelessWidget {
-  ProfilePage({Key? key}) : super(key: key);
+  ProfilePage({super.key});
 
   final User? user = FirebaseAuth.instance.currentUser;
 
@@ -18,22 +18,22 @@ class ProfilePage extends StatelessWidget {
         child: ListView(
           children: <Widget>[
             ListTile(
-              leading: Icon(Icons.person),
+              leading: const Icon(Icons.person),
               title: Text(user?.displayName ?? 'No username'),
-              subtitle: Text('Username'),
+              subtitle: const Text('Username'),
             ),
             const SizedBox(height: 16.0),
             ListTile(
-              leading: Icon(Icons.email),
+              leading: const Icon(Icons.email),
               title: Text(user?.email ?? 'No email'),
-              subtitle: Text('Email'),
+              subtitle: const Text('Email'),
             ),
             const SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => SignInPage()),
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
                 );
               },
               child: const Text('Logout'),

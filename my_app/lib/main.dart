@@ -10,46 +10,50 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Modern UI App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           color: Colors.blue,
           iconTheme: IconThemeData(color: Colors.white), // Set icon color to white
           actionsIconTheme: IconThemeData(color: Colors.white), // Set actions icon color to white
         ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           selectedItemColor: Colors.blue,
           unselectedItemColor: Colors.grey, // Set unselected item color
         ),
       ),
-      home: AuthWrapper(),
+      home: const AuthWrapper(),
     );
   }
 }
 
 class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
+          return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
         if (snapshot.hasData) {
-          return HomeScreen(); // Navigate to home screen if user is signed in
+          return const HomeScreen(); // Navigate to home screen if user is signed in
         }
-        return SignInPage(); // Navigate to sign-in page if user is not signed in
+        return const SignInPage(); // Navigate to sign-in page if user is not signed in
       },
     );
   }

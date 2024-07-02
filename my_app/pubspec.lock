@@ -26,7 +26,7 @@ packages:
     source: hosted
     version: "2.1.1"
   camera:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: camera
       sha256: dfa8fc5a1adaeb95e7a54d86a5bd56f4bb0e035515354c8ac6d262e35cec2ec8
@@ -265,7 +265,7 @@ packages:
     source: hosted
     version: "1.12.0"
   path:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: path
       sha256: "087ce49c3f0dc39180befefc60fdb4acd8f8620e5682fe2476afd0b3688bb4af"
@@ -273,7 +273,7 @@ packages:
     source: hosted
     version: "1.9.0"
   path_provider:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: c9e7d3a4cd1410877472158bee69963a4579f78b68c65a2b7d40d1a7a88bb161
