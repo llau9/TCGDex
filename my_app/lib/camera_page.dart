@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
+import 'dart:io';  // Add this import
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -12,7 +13,8 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
+  Future<void>? _initializeControllerFuture;
+  String? _imagePath;
 
   @override
   void initState() {
@@ -33,6 +35,7 @@ class _CameraPageState extends State<CameraPage> {
 
     // Initialize the controller.
     _initializeControllerFuture = _controller.initialize();
+    setState(() {}); // Trigger a rebuild to update the FutureBuilder
   }
 
   @override
@@ -46,12 +49,23 @@ class _CameraPageState extends State<CameraPage> {
     try {
       await _initializeControllerFuture;
 
+      // Construct the path where the image should be saved using the path package.
+      final directory = await getTemporaryDirectory();
       final path = join(
-        (await getTemporaryDirectory()).path,
+        directory.path,
         '${DateTime.now()}.png',
       );
 
-      await _controller.takePicture();
+      // Attempt to take a picture and get the file where it's been saved.
+      final image = await _controller.takePicture();
+
+      // Save the file to the specified path.
+      await image.saveTo(path);
+
+      // If the picture was taken, display it on a new screen.
+      setState(() {
+        _imagePath = path;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Picture taken!')),
@@ -59,6 +73,9 @@ class _CameraPageState extends State<CameraPage> {
 
     } catch (e) {
       print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
@@ -70,7 +87,9 @@ class _CameraPageState extends State<CameraPage> {
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            return CameraPreview(_controller);
+            return _imagePath == null
+                ? CameraPreview(_controller)
+                : ImagePreview(imagePath: _imagePath!);
           } else {
             return const Center(child: CircularProgressIndicator());
           }
@@ -81,6 +100,43 @@ class _CameraPageState extends State<CameraPage> {
         onPressed: () => _takePicture(context),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+class ImagePreview extends StatelessWidget {
+  final String imagePath;
+
+  const ImagePreview({super.key, required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Image.file(File(imagePath)), // Use File here
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Retake'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // Implement your image processing logic here
+                },
+                child: const Text('Use this photo'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

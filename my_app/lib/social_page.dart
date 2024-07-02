@@ -6,9 +6,7 @@ class SocialPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Social'),
-      ),
+      // Removed the AppBar from here
       body: ListView.builder(
         itemCount: 10, // Number of posts
         itemBuilder: (context, index) {

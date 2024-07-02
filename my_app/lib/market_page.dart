@@ -7,27 +7,7 @@ class MarketPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('TCGDex'),
-        leading: IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {
-            // Handle search action
-          },
-        ),
-        actions: [
-          Builder(
-            builder: (context) {
-              return IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
-                  Scaffold.of(context).openEndDrawer();
-                },
-              );
-            },
-          ),
-        ],
-      ),
+      // Removed the AppBar from here
       endDrawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
