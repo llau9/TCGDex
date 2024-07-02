@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'sign_in_page.dart';
 
 class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
+  ProfilePage({Key? key}) : super(key: key);
 
   final User? user = FirebaseAuth.instance.currentUser;
 
@@ -33,7 +33,7 @@ class ProfilePage extends StatelessWidget {
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const SignInPage()),
+                  MaterialPageRoute(builder: (context) => SignInPage()), // Use const if SignInPage constructor is const
                 );
               },
               child: const Text('Logout'),

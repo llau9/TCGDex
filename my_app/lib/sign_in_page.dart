@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart'; // Ensure HomeScreen is correctly imported
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+  const SignInPage({Key? key}) : super(key: key); // Ensure constructor is const
 
   @override
   _SignInPageState createState() => _SignInPageState();
@@ -12,10 +12,10 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   bool isSignIn = true;
 
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
   final TextEditingController signInEmailOrUsernameController = TextEditingController();
   final TextEditingController signInPasswordController = TextEditingController();
@@ -29,7 +29,7 @@ class _SignInPageState extends State<SignInPage> {
         password: signInPasswordController.text,
       );
       // Navigate to Home or any other page
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
     } catch (e) {
       print(e);
     }
@@ -49,7 +49,7 @@ class _SignInPageState extends State<SignInPage> {
       // Optionally update the display name
       await userCredential.user?.updateDisplayName(nameController.text);
       // Navigate to Home or any other page
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
     } catch (e) {
       print(e);
     }
