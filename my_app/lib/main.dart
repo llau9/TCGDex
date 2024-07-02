@@ -7,7 +7,7 @@ import 'home_screen.dart'; // Import the HomeScreen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -21,11 +21,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomeScreen(),
+      home: const AuthWrapper(), // Use AuthWrapper as the home
     );
   }
 }
-
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});

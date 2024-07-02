@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart'; // Ensure HomeScreen is correctly imported
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({Key? key}) : super(key: key); // Ensure constructor is const
+  const SignInPage({Key? key}) : super(key: key);
 
   @override
   _SignInPageState createState() => _SignInPageState();
@@ -28,8 +28,8 @@ class _SignInPageState extends State<SignInPage> {
         email: signInEmailOrUsernameController.text,
         password: signInPasswordController.text,
       );
-      // Navigate to Home or any other page
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()));
     } catch (e) {
       print(e);
     }
@@ -46,10 +46,9 @@ class _SignInPageState extends State<SignInPage> {
         email: emailController.text,
         password: passwordController.text,
       );
-      // Optionally update the display name
       await userCredential.user?.updateDisplayName(nameController.text);
-      // Navigate to Home or any other page
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()));
     } catch (e) {
       print(e);
     }

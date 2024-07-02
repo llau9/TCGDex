@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'profile_page.dart';
+import 'profile_page.dart'; // Import the ProfilePage
 import 'portfolio_page.dart';
 import 'camera_page.dart';
 import 'social_page.dart';
 import 'settings_page.dart';
 import 'sign_in_page.dart';
 import 'market_page.dart';
+import 'main.dart'; // Import the AuthWrapper
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -86,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ProfilePage()),
+                    MaterialPageRoute(builder: (context) => ProfilePage()), // Remove 'const'
                   );
                 },
               ),
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     user = null;
                   });
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(builder: (context) => const AuthWrapper()), // Ensure this navigates to AuthWrapper
                   );
                 },
               ),
