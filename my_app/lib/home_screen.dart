@@ -6,7 +6,7 @@ import 'camera_page.dart';
 import 'social_page.dart';
 import 'settings_page.dart';
 import 'sign_in_page.dart';
-import 'market_page.dart'; // Import the MarketPage
+import 'market_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  User? user;
 
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeContent(),
@@ -25,6 +26,12 @@ class _HomeScreenState extends State<HomeScreen> {
     const PortfolioPage(),
     const SocialPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    user = FirebaseAuth.instance.currentUser;
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -72,26 +79,46 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('Profile'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.login),
-              title: const Text('Sign In'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignInPage()),
-                );
-              },
-            ),
+            if (user != null) ...[
+              ListTile(
+                leading: const Icon(Icons.account_circle),
+                title: const Text('Profile'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfilePage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Sign Out'),
+                onTap: () {
+                  FirebaseAuth.instance.signOut();
+                  setState(() {
+                    user = null;
+                  });
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
+                },
+              ),
+            ] else ...[
+              ListTile(
+                leading: const Icon(Icons.login),
+                title: const Text('Sign In'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SignInPage()),
+                  ).then((_) {
+                    setState(() {
+                      user = FirebaseAuth.instance.currentUser;
+                    });
+                  });
+                },
+              ),
+            ],
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),
@@ -99,16 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign Out'),
-              onTap: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const SignInPage()),
                 );
               },
             ),
