@@ -167,7 +167,14 @@ class WishlistCard extends StatelessWidget {
     return Card(
       child: SizedBox(
         width: 120.0,
-        child: Image.network(imageUrl),
+        child: imageUrl.isNotEmpty
+            ? AspectRatio(
+                aspectRatio: 1.0, // Adjust this ratio to match the image's aspect ratio
+                child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+                  return Center(child: Text('Error loading image'));
+                }),
+              )
+            : Center(child: Text('No image URL')),
       ),
     );
   }
@@ -182,7 +189,14 @@ class StorefrontCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Center(
-        child: Image.network(imageUrl),
+        child: imageUrl.isNotEmpty
+            ? AspectRatio(
+                aspectRatio: 1.0, // Adjust this ratio to match the image's aspect ratio
+                child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+                  return Center(child: Text('Error loading image'));
+                }),
+              )
+            : Center(child: Text('No image URL')),
       ),
     );
   }
