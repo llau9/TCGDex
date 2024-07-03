@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'profile_page.dart';
+import 'profile_page.dart'; // Ensure this import is added
 
 class MarketPage extends StatefulWidget {
   const MarketPage({super.key});
@@ -11,15 +11,28 @@ class MarketPage extends StatefulWidget {
 
 class _MarketPageState extends State<MarketPage> {
   static const platform = MethodChannel('com.example/tcgdex');
+  late Future<List<String>> wishlistImages;
+  late Future<List<String>> storefrontImages;
 
-  Future<String> fetchRandomCardImage() async {
+  @override
+  void initState() {
+    super.initState();
+    wishlistImages = fetchRandomCardImages(4); // Fetch 4 images for the wishlist
+    storefrontImages = fetchRandomCardImages(4); // Fetch 4 images for the storefront
+  }
+
+  Future<List<String>> fetchRandomCardImages(int count) async {
+    List<String> images = [];
     try {
-      final String result = await platform.invokeMethod('fetchRandomCardImage');
-      return result;
+      for (int i = 0; i < count; i++) {
+        final String result = await platform.invokeMethod('fetchRandomCardImage');
+        images.add(result);
+        print("Fetched card image URL: $result");
+      }
     } on PlatformException catch (e) {
       print("Failed to fetch random card image: '${e.message}'.");
-      return '';
     }
+    return images;
   }
 
   @override
@@ -91,17 +104,21 @@ class _MarketPageState extends State<MarketPage> {
               ),
             ),
             const SizedBox(height: 16.0),
-            FutureBuilder<String>(
-              future: fetchRandomCardImage(),
+            FutureBuilder<List<String>>(
+              future: wishlistImages,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Text('No card image found');
+                  return const Text('No card images found');
                 }
+                final images = snapshot.data!;
                 return SizedBox(
                   height: 150.0,
-                  child: Image.network(snapshot.data!),
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: images.map((image) => WishlistCard(imageUrl: image)).toList(),
+                  ),
                 );
               },
             ),
@@ -114,22 +131,58 @@ class _MarketPageState extends State<MarketPage> {
               ),
             ),
             const SizedBox(height: 16.0),
-            FutureBuilder<String>(
-              future: fetchRandomCardImage(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Text('No card image found');
-                }
-                return SizedBox(
-                  height: 150.0,
-                  child: Image.network(snapshot.data!),
-                );
-              },
+            Expanded(
+              child: FutureBuilder<List<String>>(
+                future: storefrontImages,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No card images found');
+                  }
+                  final images = snapshot.data!;
+                  return GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16.0,
+                    mainAxisSpacing: 16.0,
+                    children: images.map((image) => StorefrontCard(imageUrl: image)).toList(),
+                  );
+                },
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class WishlistCard extends StatelessWidget {
+  final String imageUrl;
+
+  const WishlistCard({super.key, required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: SizedBox(
+        width: 120.0,
+        child: Image.network(imageUrl),
+      ),
+    );
+  }
+}
+
+class StorefrontCard extends StatelessWidget {
+  final String imageUrl;
+
+  const StorefrontCard({super.key, required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Center(
+        child: Image.network(imageUrl),
       ),
     );
   }

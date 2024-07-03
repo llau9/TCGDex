@@ -1,18 +1,19 @@
 package com.project.TCGDex;
 
 import android.os.Bundle;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import net.tcgdex.sdk.TCGdex;
+import net.tcgdex.sdk.models.Card;
 import net.tcgdex.sdk.models.CardResume;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Random;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "com.example/tcgdex";
+    private static final String TAG = "MainActivity";
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -39,13 +40,16 @@ public class MainActivity extends FlutterActivity {
         try {
             CardResume[] cardResumes = api.fetchCards();
             if (cardResumes.length == 0) {
+                Log.e(TAG, "No cards found.");
                 return null;
             }
             Random rand = new Random();
             int randomIndex = rand.nextInt(cardResumes.length);
-            return cardResumes[randomIndex].getImage();
+            String imageUrl = cardResumes[randomIndex].getImage();
+            Log.d(TAG, "Fetched card image URL: " + imageUrl);
+            return imageUrl;
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error fetching card image: ", e);
             return null;
         }
     }
