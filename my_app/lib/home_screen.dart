@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'profile_page.dart'; // Import the ProfilePage
+import 'profile_page.dart';
 import 'portfolio_page.dart';
 import 'camera_page.dart';
 import 'social_page.dart';
 import 'settings_page.dart';
 import 'sign_in_page.dart';
-import 'market_page.dart';
-import 'main.dart'; // Import the AuthWrapper
+import 'market_page.dart'; // Import the MarketPage
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -18,21 +16,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  User? user;
 
-  static final List<Widget> _widgetOptions = <Widget>[
-    const HomeContent(),
-    const MarketPage(),
-    const CameraPage(),
-    const PortfolioPage(),
-    const SocialPage(),
+  static List<Widget> _widgetOptions = <Widget>[
+    HomeContent(),
+    MarketPage(),
+    CameraPage(),
+    PortfolioPage(),
+    SocialPage(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    user = FirebaseAuth.instance.currentUser;
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -80,53 +71,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            if (user != null) ...[
-              ListTile(
-                leading: const Icon(Icons.account_circle),
-                title: const Text('Profile'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfilePage()), // Remove 'const'
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Sign Out'),
-                onTap: () {
-                  FirebaseAuth.instance.signOut();
-                  setState(() {
-                    user = null;
-                  });
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const AuthWrapper()), // Ensure this navigates to AuthWrapper
-                  );
-                },
-              ),
-            ] else ...[
-              ListTile(
-                leading: const Icon(Icons.login),
-                title: const Text('Sign In'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SignInPage()),
-                  ).then((_) {
-                    setState(() {
-                      user = FirebaseAuth.instance.currentUser;
-                    });
-                  });
-                },
-              ),
-            ],
+            ListTile(
+              leading: const Icon(Icons.account_circle),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.login),
+              title: const Text('Sign In'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignInPage()),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
             ),
@@ -170,17 +141,15 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
-
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
-      children: const <Widget>[
+      children: <Widget>[
         HomeCard(title: 'Set 1'),
-        SizedBox(height: 16.0),
+        const SizedBox(height: 16.0),
         HomeCard(title: 'Set 2'),
-        SizedBox(height: 16.0),
+        const SizedBox(height: 16.0),
         HomeCard(title: 'Set 3'),
       ],
     );
@@ -190,7 +159,7 @@ class HomeContent extends StatelessWidget {
 class HomeCard extends StatelessWidget {
   final String title;
 
-  const HomeCard({super.key, required this.title});
+  const HomeCard({required this.title, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
