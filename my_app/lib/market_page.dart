@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'profile_page.dart'; // Ensure this import is added
+import 'profile_page.dart';
 
 class MarketPage extends StatefulWidget {
   const MarketPage({super.key});
