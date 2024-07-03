@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
-import 'home_screen.dart';
+import 'home_screen.dart'; // Ensure HomeScreen is correctly imported
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({Key? key}) : super(key: key);
+  const SignInPage({Key? key}) : super(key: key); // Ensure constructor is const
 
   @override
   _SignInPageState createState() => _SignInPageState();
@@ -22,7 +22,6 @@ class _SignInPageState extends State<SignInPage> {
   final TextEditingController signInPasswordController = TextEditingController();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void signIn() async {
     try {
@@ -30,10 +29,16 @@ class _SignInPageState extends State<SignInPage> {
         email: signInEmailOrUsernameController.text,
         password: signInPasswordController.text,
       );
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()));
+
+      if (userCredential.user != null) {
+        // User is successfully authenticated, navigate to HomeScreen
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+      }
     } catch (e) {
       print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to sign in: $e'),
+      ));
     }
   }
 
@@ -44,26 +49,32 @@ class _SignInPageState extends State<SignInPage> {
     }
 
     try {
+      print('Attempting to create user...');
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text,
       );
+      print('User created: ${userCredential.user?.uid}');
 
-      await userCredential.user?.updateDisplayName(nameController.text);
-
-      // Create a new document for the user in the 'users' collection
-      await _firestore.collection('users').doc(userCredential.user?.uid).set({
+      // Save user data to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
         'name': nameController.text,
         'username': usernameController.text,
         'email': emailController.text,
-        'portfolio': [],
-        // Add other fields as needed
       });
 
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()));
+      print('User data saved to Firestore');
+
+      // Optionally update the display name
+      await userCredential.user?.updateDisplayName(nameController.text);
+
+      // Navigate to Home or any other page
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
     } catch (e) {
-      print(e);
+      print('Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to create account: $e'),
+      ));
     }
   }
 
