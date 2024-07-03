@@ -57,4 +57,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth:21.0.1'
     implementation 'com.google.firebase:firebase-firestore:24.0.0'
     implementation 'com.google.firebase:firebase-core:20.0.0'
+    implementation 'net.tcgdex:java-sdk:2.0.0'
 }
