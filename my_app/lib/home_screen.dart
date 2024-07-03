@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'portfolio_page.dart';
 import 'camera_page.dart';
@@ -33,6 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('TCGDex'),
@@ -81,16 +84,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.login),
-              title: const Text('Sign In'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignInPage()),
-                );
-              },
-            ),
+            if (user == null)
+              ListTile(
+                leading: const Icon(Icons.login),
+                title: const Text('Sign In'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SignInPage()),
+                  );
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),

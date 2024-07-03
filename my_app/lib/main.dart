@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'home_screen.dart';
-import 'sign_in_page.dart';
+import 'sign_in_page.dart'; // Ensure SignInPage is correctly imported
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,25 +29,7 @@ class MyApp extends StatelessWidget {
           unselectedItemColor: Colors.grey,
         ),
       ),
-      home: AuthCheck(), // Start with AuthCheck widget
-    );
-  }
-}
-
-class AuthCheck extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        } else if (snapshot.hasData) {
-          return HomeScreen();
-        } else {
-          return SignInPage();
-        }
-      },
+      home: HomeScreen(), // Set HomeScreen as the default screen
     );
   }
 }
