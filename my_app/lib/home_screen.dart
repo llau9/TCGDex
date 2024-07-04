@@ -7,6 +7,7 @@ import 'social_page.dart';
 import 'settings_page.dart';
 import 'sign_in_page.dart';
 import 'market_page.dart'; // Import the MarketPage
+import 'search_page.dart'; // Import the SearchPage
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -42,7 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
         leading: IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {
-            // Handle search action
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SearchPage()),
+            );
           },
         ),
         actions: [
