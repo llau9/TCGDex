@@ -43,40 +43,56 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   void createAccount() async {
-    if (passwordController.text != confirmPasswordController.text) {
-      print('Passwords do not match');
-      return;
-    }
-
-    try {
-      print('Attempting to create user...');
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
-      );
-      print('User created: ${userCredential.user?.uid}');
-
-      // Save user data to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
-        'name': nameController.text,
-        'username': usernameController.text,
-        'email': emailController.text,
-      });
-
-      print('User data saved to Firestore');
-
-      // Optionally update the display name
-      await userCredential.user?.updateDisplayName(nameController.text);
-
-      // Navigate to Home or any other page
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
-    } catch (e) {
-      print('Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to create account: $e'),
-      ));
-    }
+  if (passwordController.text != confirmPasswordController.text) {
+    print('Passwords do not match');
+    return;
   }
+
+  try {
+    print('Attempting to create user...');
+    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+    print('User created: ${userCredential.user?.uid}');
+
+    // Save user data to Firestore
+    await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+      'name': nameController.text,
+      'username': usernameController.text,
+      'email': emailController.text,
+    });
+    print('User data saved to Firestore');
+
+    // Create portfolios subcollection for the user
+    CollectionReference portfolios = FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).collection('portfolio');
+
+    // Add Default Portfolio
+    await portfolios.add({
+      'portfolioName': 'Default Portfolio',
+      // Add more fields as needed
+    });
+    print('Default Portfolio created');
+
+    // Add Wishlist Portfolio
+    await portfolios.add({
+      'portfolioName': 'Wishlist',
+      // Add more fields as needed
+    });
+    print('Wishlist Portfolio created');
+
+    // Optionally update the display name
+    await userCredential.user?.updateDisplayName(nameController.text);
+
+    // Navigate to HomeScreen
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+  } catch (e) {
+    print('Error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Failed to create account: $e'),
+    ));
+  }
+}
 
   @override
   Widget build(BuildContext context) {
