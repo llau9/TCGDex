@@ -165,16 +165,16 @@ class WishlistCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: SizedBox(
-        width: 120.0,
-        child: imageUrl.isNotEmpty
-            ? AspectRatio(
-                aspectRatio: 1.0, // Adjust this ratio to match the image's aspect ratio
-                child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
-                  return Center(child: Text('Error loading image'));
-                }),
-              )
-            : Center(child: Text('No image URL')),
+      child: Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: AspectRatio(
+          aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+          child: imageUrl.isNotEmpty
+              ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Text('Error loading image'));
+                })
+              : const Center(child: Text('No image URL')),
+        ),
       ),
     );
   }
@@ -188,15 +188,16 @@ class StorefrontCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Center(
-        child: imageUrl.isNotEmpty
-            ? AspectRatio(
-                aspectRatio: 1.0, // Adjust this ratio to match the image's aspect ratio
-                child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
-                  return Center(child: Text('Error loading image'));
-                }),
-              )
-            : Center(child: Text('No image URL')),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: AspectRatio(
+          aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+          child: imageUrl.isNotEmpty
+              ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Text('Error loading image'));
+                })
+              : const Center(child: Text('No image URL')),
+        ),
       ),
     );
   }
