@@ -18,14 +18,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Modern UI App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.red,
         appBarTheme: AppBarTheme(
-          color: Colors.blue,
+          color: Colors.red,
           iconTheme: IconThemeData(color: Colors.white),
           actionsIconTheme: IconThemeData(color: Colors.white),
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          selectedItemColor: Colors.blue,
+          selectedItemColor: Colors.red,
           unselectedItemColor: Colors.grey,
         ),
       ),
