@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "com.example/tcgdex";
@@ -39,11 +40,9 @@ public class MainActivity extends FlutterActivity {
                         String cardId = call.argument("cardId");
                         fetchCardDetails(cardId, result);
                     } else if (call.method.equals("searchCards")) {
-                        String name = call.argument("name");
-                        String set = call.argument("set");
-                        String series = call.argument("series");
-                        String artist = call.argument("artist");
-                        searchCards(name, set, series, artist, result);
+                        Map<String, String> criteria = call.arguments();
+                        Log.d(TAG, "Search criteria: " + criteria);
+                        searchCards(criteria, result);
                     } else {
                         result.notImplemented();
                     }
@@ -114,7 +113,7 @@ public class MainActivity extends FlutterActivity {
             TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching card details for ID: " + cardId);
-                Card card = api.getCard(cardId);
+                Card card = api.fetchCard(cardId); // Correct method call
 
                 if (card == null) {
                     Log.e(TAG, "Card not found.");
@@ -130,27 +129,24 @@ public class MainActivity extends FlutterActivity {
         });
     }
 
-    private void searchCards(String name, String set, String series, String artist, MethodChannel.Result result) {
+    private void searchCards(Map<String, String> criteria, MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
             List<String> candidateIds = new ArrayList<>();
             for (Map<String, String> card : cardData) {
                 boolean matches = true;
-                if (name != null && !card.get("name").contains(name)) {
-                    matches = false;
-                }
-                if (set != null && !card.get("set").contains(set)) {
-                    matches = false;
-                }
-                if (series != null && !card.get("series").contains(series)) {
-                    matches = false;
-                }
-                if (artist != null && !card.get("artist").contains(artist)) {
-                    matches = false;
+                for (Map.Entry<String, String> entry : criteria.entrySet()) {
+                    String key = entry.getKey().toLowerCase();
+                    String value = entry.getValue().toLowerCase();
+                    if (!card.containsKey(key) || !card.get(key).toLowerCase().contains(value)) {
+                        matches = false;
+                        break;
+                    }
                 }
                 if (matches) {
                     candidateIds.add(card.get("id"));
                 }
             }
+            Log.d(TAG, "Search results: " + candidateIds);
             result.success(candidateIds);
         });
     }

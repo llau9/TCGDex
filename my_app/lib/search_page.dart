@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 
 class SearchPage extends StatefulWidget {
   @override
@@ -8,28 +7,49 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _setController = TextEditingController();
-  final TextEditingController _seriesController = TextEditingController();
-  final TextEditingController _artistController = TextEditingController();
-
+  final TextEditingController _searchController = TextEditingController();
+  List<String> _filters = [];
   List<String> _searchResults = [];
 
   void _search() async {
     const platform = MethodChannel('com.example/tcgdex');
+    Map<String, String> criteria = _parseFilters(_filters);
+    print("Search criteria: $criteria"); // Debugging
+
     try {
-      final List<dynamic> results = await platform.invokeMethod('searchCards', {
-        'name': _nameController.text,
-        'set': _setController.text,
-        'series': _seriesController.text,
-        'artist': _artistController.text,
-      });
+      final List<dynamic> results = await platform.invokeMethod('searchCards', criteria);
+      print("Search results: $results"); // Debugging
       setState(() {
         _searchResults = results.cast<String>();
       });
     } on PlatformException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to search cards: ${e.message}')));
     }
+  }
+
+  Map<String, String> _parseFilters(List<String> filters) {
+    Map<String, String> criteria = {};
+    for (String filter in filters) {
+      List<String> parts = filter.split(':');
+      if (parts.length == 2) {
+        String key = parts[0].trim().toLowerCase();
+        String value = parts[1].trim();
+        criteria[key] = value;
+      }
+    }
+    return criteria;
+  }
+
+  void _addFilter(String filter) {
+    setState(() {
+      _filters.add(filter);
+    });
+  }
+
+  void _removeFilter(int index) {
+    setState(() {
+      _filters.removeAt(index);
+    });
   }
 
   void _fetchCardDetails(String cardId) async {
@@ -47,52 +67,55 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Cards'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: _search,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        child: Column(
           children: [
             TextField(
-              controller: _nameController,
+              controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Card Name',
-                border: OutlineInputBorder(),
+                hintText: 'Enter filter (e.g., name: Pikachu)',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: () {
+                    if (_searchController.text.isNotEmpty) {
+                      _addFilter(_searchController.text);
+                      _searchController.clear();
+                    }
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _setController,
-              decoration: InputDecoration(
-                labelText: 'Set',
-                border: OutlineInputBorder(),
+            Wrap(
+              spacing: 8.0,
+              children: _filters.asMap().entries.map((entry) {
+                int index = entry.key;
+                String filter = entry.value;
+                return Chip(
+                  label: Text(filter),
+                  onDeleted: () => _removeFilter(index),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                children: _searchResults.map((id) {
+                  return ListTile(
+                    title: Text(id),
+                    onTap: () => _fetchCardDetails(id),
+                  );
+                }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _seriesController,
-              decoration: InputDecoration(
-                labelText: 'Series',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _artistController,
-              decoration: InputDecoration(
-                labelText: 'Artist',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _search,
-              child: const Text('Search'),
-            ),
-            const SizedBox(height: 16),
-            ..._searchResults.map((id) => ListTile(
-              title: Text(id),
-              onTap: () => _fetchCardDetails(id),
-            )).toList(),
           ],
         ),
       ),
