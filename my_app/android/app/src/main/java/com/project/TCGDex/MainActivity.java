@@ -2,6 +2,7 @@ package com.project.TCGDex;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -9,11 +10,15 @@ import io.flutter.plugin.common.MethodChannel;
 import net.tcgdex.sdk.TCGdex;
 import net.tcgdex.sdk.models.Card;
 import net.tcgdex.sdk.models.CardResume;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,59 +32,83 @@ public class MainActivity extends FlutterActivity {
     private static final String TAG = "MainActivity";
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private List<Map<String, String>> cardData = new ArrayList<>();
+    private boolean csvLoaded = false;
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
-        loadCSVData();
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
             .setMethodCallHandler(
                 (call, result) -> {
-                    switch (call.method) {
-                        case "fetchRandomCardImage":
-                            fetchRandomCardImage(result);
-                            break;
-                        case "fetchCardDetails":
-                            String cardId = call.argument("cardId");
-                            fetchCardDetails(cardId, result);
-                            break;
-                        case "searchCards":
-                            String name = call.argument("name");
-                            Log.d(TAG, "Search name: " + name);
-                            searchCards(name, result);
-                            break;
-                        default:
-                            result.notImplemented();
-                            break;
+                    try {
+                        switch (call.method) {
+                            case "fetchRandomCardImage":
+                                fetchRandomCardImage(result);
+                                break;
+                            case "fetchCardDetails":
+                                String cardId = call.argument("cardId");
+                                fetchCardDetails(cardId, result);
+                                break;
+                            case "searchCards":
+                                String name = call.argument("name");
+                                Log.d(TAG, "Search name: " + name);
+                                searchCards(name, result);
+                                break;
+                            case "isCSVLoaded":
+                                Log.d(TAG, "isCSVLoaded called, returning: " + csvLoaded);
+                                result.success(csvLoaded);
+                                break;
+                            default:
+                                result.notImplemented();
+                                break;
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error in MethodChannel call", e);
+                        result.error("UNEXPECTED_ERROR", "An unexpected error occurred.", e);
                     }
                 }
             );
+        loadCSVData();
     }
 
     private void loadCSVData() {
-        try (InputStream inputStream = getAssets().open("cardAttributes.csv");
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            String[] headers = reader.readLine().split(",");
-            Log.d(TAG, "CSV Headers: " + java.util.Arrays.toString(headers));
+        executorService.execute(() -> {
+            runOnUiThread(() -> Toast.makeText(this, "Loading CSV data...", Toast.LENGTH_SHORT).show());
+            try (InputStream inputStream = getAssets().open("cardAttributes.csv");
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                 CSVReader csvReader = new CSVReader(reader)) {
+                 
+                String[] headers = csvReader.readNext();
+                Log.d(TAG, "CSV Headers: " + Arrays.toString(headers));
+                runOnUiThread(() -> Toast.makeText(this, "CSV Headers: " + Arrays.toString(headers), Toast.LENGTH_LONG).show());
 
-            while ((line = reader.readLine()) != null) {
-                String[] values = line.split(",", -1);
-                if (values.length != headers.length) {
-                    Log.w(TAG, "Skipping malformed line: " + line);
-                    continue;
+                String[] values;
+                while ((values = csvReader.readNext()) != null) {
+                    Log.d(TAG, "Reading line: " + Arrays.toString(values));
+                    if (values.length != headers.length) {
+                        runOnUiThread(() -> Toast.makeText(this, "Skipping malformed line", Toast.LENGTH_SHORT).show());
+                        Log.d(TAG, "Malformed line: " + Arrays.toString(values));
+                        continue;
+                    }
+                    Map<String, String> card = new HashMap<>();
+                    for (int i = 0; i < headers.length; i++) {
+                        card.put(headers[i], values[i]);
+                    }
+                    synchronized (cardData) {
+                        cardData.add(card);
+                    }
                 }
-                Map<String, String> card = new HashMap<>();
-                for (int i = 0; i < headers.length; i++) {
-                    card.put(headers[i], values[i]);
-                }
-                cardData.add(card);
-                Log.d(TAG, "Card added: " + card.toString());
+                csvLoaded = true;
+                runOnUiThread(() -> Toast.makeText(this, "CSV data loaded successfully, total cards: " + cardData.size(), Toast.LENGTH_LONG).show());
+                Log.d(TAG, "CSV data loaded successfully, total cards: " + cardData.size());
+            } catch (IOException | CsvException e) {
+                Log.e(TAG, "Error reading CSV file", e);
+                runOnUiThread(() -> Toast.makeText(this, "Error reading CSV file: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                Log.e(TAG, "Unexpected error while loading CSV", e);
+                runOnUiThread(() -> Toast.makeText(this, "Unexpected error while loading CSV: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
-            Log.d(TAG, "CSV data loaded successfully, total cards: " + cardData.size());
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading CSV data", e);
-        }
+        });
     }
 
     private void fetchRandomCardImage(MethodChannel.Result result) {
@@ -131,8 +160,17 @@ public class MainActivity extends FlutterActivity {
                 Map<String, Object> cardDetails = new HashMap<>();
                 cardDetails.put("id", card.getId());
                 cardDetails.put("name", card.getName());
-                cardDetails.put("image", card.getImage());
 
+                String baseUrl = card.getImage();
+                if (baseUrl == null || baseUrl.isEmpty()) {
+                    Log.e(TAG, "Card image URL not found.");
+                    cardDetails.put("image", "");
+                } else {
+                    String imageUrl = baseUrl + "/high.png";
+                    cardDetails.put("image", imageUrl);
+                }
+
+                Log.d(TAG, "Fetched card details: " + cardDetails);
                 result.success(cardDetails);
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching card details: ", e);
@@ -144,12 +182,16 @@ public class MainActivity extends FlutterActivity {
     private void searchCards(String name, MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
             List<String> candidateIds = new ArrayList<>();
-            for (Map<String, String> card : cardData) {
-                String cardName = card.get("name").toLowerCase();
-                if (cardName.contains(name.toLowerCase())) {
-                    candidateIds.add(card.get("id"));
+            synchronized (cardData) {
+                for (Map<String, String> card : cardData) {
+                    String cardName = card.get("name").toLowerCase();
+                    if (cardName.contains(name.toLowerCase())) {
+                        candidateIds.add(card.get("id"));
+                        Log.d(TAG, "Matching card ID: " + card.get("id"));
+                    }
                 }
             }
+            Log.d(TAG, "Search results: " + candidateIds);
             result.success(candidateIds);
         });
     }

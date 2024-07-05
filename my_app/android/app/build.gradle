@@ -58,4 +58,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore:24.0.0'
     implementation 'com.google.firebase:firebase-core:20.0.0'
     implementation 'net.tcgdex:java-sdk:2.0.0'
+    implementation 'com.opencsv:opencsv:5.5.2'
 }

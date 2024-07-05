@@ -12,10 +12,36 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   List<String> _searchResults = [];
   final Map<String, String> _cardImages = {};
+  bool csvLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkCSVLoaded();
+  }
+
+  void checkCSVLoaded() async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final bool result = await platform.invokeMethod('isCSVLoaded');
+      setState(() {
+        csvLoaded = result;
+        print('CSV loaded status: $csvLoaded');
+      });
+    } on PlatformException catch (e) {
+      print('Failed to check CSV load status: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to check CSV load status: ${e.message}')));
+    }
+  }
 
   void _search() async {
     const platform = MethodChannel('com.example/tcgdex');
     String name = _searchController.text;
+
+    if (!csvLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('CSV file not loaded yet')));
+      return;
+    }
 
     try {
       final List<dynamic> results = await platform.invokeMethod('searchCards', {'name': name});
@@ -27,6 +53,7 @@ class _SearchPageState extends State<SearchPage> {
         _fetchCardImage(cardId);
       }
     } on PlatformException catch (e) {
+      print('Failed to search cards: ${e.message}');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to search cards: ${e.message}')));
     }
   }
@@ -39,7 +66,9 @@ class _SearchPageState extends State<SearchPage> {
       setState(() {
         _cardImages[cardId] = imageUrl;
       });
+      print('Fetched image URL for $cardId: $imageUrl');
     } on PlatformException catch (e) {
+      print('Failed to fetch card image: ${e.message}');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch card image: ${e.message}')));
     }
   }
