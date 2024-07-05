@@ -34,7 +34,7 @@ android {
 
     defaultConfig {
         applicationId = "com.project.TCGDex"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 34
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName

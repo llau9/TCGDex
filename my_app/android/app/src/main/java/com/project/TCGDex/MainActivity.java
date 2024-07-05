@@ -9,6 +9,7 @@ import io.flutter.plugin.common.MethodChannel;
 import net.tcgdex.sdk.TCGdex;
 import net.tcgdex.sdk.models.Card;
 import net.tcgdex.sdk.models.CardResume;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.InputStream;
@@ -34,37 +35,48 @@ public class MainActivity extends FlutterActivity {
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
             .setMethodCallHandler(
                 (call, result) -> {
-                    if (call.method.equals("fetchRandomCardImage")) {
-                        fetchRandomCardImage(result);
-                    } else if (call.method.equals("fetchCardDetails")) {
-                        String cardId = call.argument("cardId");
-                        fetchCardDetails(cardId, result);
-                    } else if (call.method.equals("searchCards")) {
-                        Map<String, String> criteria = call.arguments();
-                        Log.d(TAG, "Search criteria: " + criteria);
-                        searchCards(criteria, result);
-                    } else {
-                        result.notImplemented();
+                    switch (call.method) {
+                        case "fetchRandomCardImage":
+                            fetchRandomCardImage(result);
+                            break;
+                        case "fetchCardDetails":
+                            String cardId = call.argument("cardId");
+                            fetchCardDetails(cardId, result);
+                            break;
+                        case "searchCards":
+                            String name = call.argument("name");
+                            Log.d(TAG, "Search name: " + name);
+                            searchCards(name, result);
+                            break;
+                        default:
+                            result.notImplemented();
+                            break;
                     }
                 }
             );
     }
 
     private void loadCSVData() {
-        try {
-            InputStream inputStream = getAssets().open("Backend/PokemonCards/cardAttributes/cardAttributes.csv");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try (InputStream inputStream = getAssets().open("cardAttributes.csv");
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             String line;
             String[] headers = reader.readLine().split(",");
+            Log.d(TAG, "CSV Headers: " + java.util.Arrays.toString(headers));
+
             while ((line = reader.readLine()) != null) {
-                String[] values = line.split(",");
+                String[] values = line.split(",", -1);
+                if (values.length != headers.length) {
+                    Log.w(TAG, "Skipping malformed line: " + line);
+                    continue;
+                }
                 Map<String, String> card = new HashMap<>();
                 for (int i = 0; i < headers.length; i++) {
                     card.put(headers[i], values[i]);
                 }
                 cardData.add(card);
+                Log.d(TAG, "Card added: " + card.toString());
             }
-            reader.close();
+            Log.d(TAG, "CSV data loaded successfully, total cards: " + cardData.size());
         } catch (Exception e) {
             Log.e(TAG, "Error loading CSV data", e);
         }
@@ -76,7 +88,6 @@ public class MainActivity extends FlutterActivity {
             try {
                 Log.d(TAG, "Fetching cards...");
                 CardResume[] cardResumes = api.fetchCards();
-                Log.d(TAG, "Number of cards fetched: " + cardResumes.length);
 
                 if (cardResumes.length == 0) {
                     Log.e(TAG, "No cards found.");
@@ -88,8 +99,6 @@ public class MainActivity extends FlutterActivity {
                 int randomIndex = rand.nextInt(cardResumes.length);
                 CardResume randomCard = cardResumes[randomIndex];
 
-                Log.d(TAG, "Random card selected: " + randomCard.getName());
-
                 String baseUrl = randomCard.getImage();
                 if (baseUrl == null || baseUrl.isEmpty()) {
                     Log.e(TAG, "Selected card has no base image URL.");
@@ -97,9 +106,7 @@ public class MainActivity extends FlutterActivity {
                     return;
                 }
 
-                // Construct the final URL with quality and extension
                 String imageUrl = baseUrl + "/high.png";
-                Log.d(TAG, "Constructed card image URL: " + imageUrl);
                 result.success(imageUrl);
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching card image: ", e);
@@ -113,7 +120,7 @@ public class MainActivity extends FlutterActivity {
             TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching card details for ID: " + cardId);
-                Card card = api.fetchCard(cardId); // Correct method call
+                Card card = api.fetchCard(cardId);
 
                 if (card == null) {
                     Log.e(TAG, "Card not found.");
@@ -121,7 +128,12 @@ public class MainActivity extends FlutterActivity {
                     return;
                 }
 
-                result.success(card.getName()); // Adjust this to return the required details
+                Map<String, Object> cardDetails = new HashMap<>();
+                cardDetails.put("id", card.getId());
+                cardDetails.put("name", card.getName());
+                cardDetails.put("image", card.getImage());
+
+                result.success(cardDetails);
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching card details: ", e);
                 result.error("UNAVAILABLE", "Error fetching card details.", e);
@@ -129,24 +141,15 @@ public class MainActivity extends FlutterActivity {
         });
     }
 
-    private void searchCards(Map<String, String> criteria, MethodChannel.Result result) {
+    private void searchCards(String name, MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
             List<String> candidateIds = new ArrayList<>();
             for (Map<String, String> card : cardData) {
-                boolean matches = true;
-                for (Map.Entry<String, String> entry : criteria.entrySet()) {
-                    String key = entry.getKey().toLowerCase();
-                    String value = entry.getValue().toLowerCase();
-                    if (!card.containsKey(key) || !card.get(key).toLowerCase().contains(value)) {
-                        matches = false;
-                        break;
-                    }
-                }
-                if (matches) {
+                String cardName = card.get("name").toLowerCase();
+                if (cardName.contains(name.toLowerCase())) {
                     candidateIds.add(card.get("id"));
                 }
             }
-            Log.d(TAG, "Search results: " + candidateIds);
             result.success(candidateIds);
         });
     }

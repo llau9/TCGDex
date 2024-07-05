@@ -10,7 +10,7 @@ import 'market_page.dart'; // Import the MarketPage
 import 'search_page.dart'; // Import the SearchPage
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -19,12 +19,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  static List<Widget> _widgetOptions = <Widget>[
-    HomeContent(),
-    MarketPage(),
-    CameraPage(),
-    PortfolioPage(),
-    SocialPage(),
+  static final List<Widget> _widgetOptions = <Widget>[
+    const HomeContent(),
+    const MarketPage(),
+    const CameraPage(),
+    const PortfolioPage(),
+    const SocialPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SearchPage()),
+              MaterialPageRoute(builder: (context) => const SearchPage()),
             );
           },
         ),
@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SignInPage()),
+                    MaterialPageRoute(builder: (context) => const SignInPage()),
                   );
                 },
               ),
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
                 );
               },
             ),
@@ -149,15 +149,17 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomeContent extends StatelessWidget {
+  const HomeContent({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
-      children: <Widget>[
+      children: const <Widget>[
         HomeCard(title: 'Set 1'),
-        const SizedBox(height: 16.0),
+        SizedBox(height: 16.0),
         HomeCard(title: 'Set 2'),
-        const SizedBox(height: 16.0),
+        SizedBox(height: 16.0),
         HomeCard(title: 'Set 3'),
       ],
     );
@@ -167,7 +169,7 @@ class HomeContent extends StatelessWidget {
 class HomeCard extends StatelessWidget {
   final String title;
 
-  const HomeCard({required this.title, Key? key}) : super(key: key);
+  const HomeCard({required this.title, super.key});
 
   @override
   Widget build(BuildContext context) {

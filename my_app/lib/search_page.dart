@@ -2,63 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class SearchPage extends StatefulWidget {
+  const SearchPage({super.key});
+
   @override
   _SearchPageState createState() => _SearchPageState();
 }
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> _filters = [];
   List<String> _searchResults = [];
+  final Map<String, String> _cardImages = {};
 
   void _search() async {
     const platform = MethodChannel('com.example/tcgdex');
-    Map<String, String> criteria = _parseFilters(_filters);
-    print("Search criteria: $criteria"); // Debugging
+    String name = _searchController.text;
 
     try {
-      final List<dynamic> results = await platform.invokeMethod('searchCards', criteria);
-      print("Search results: $results"); // Debugging
+      final List<dynamic> results = await platform.invokeMethod('searchCards', {'name': name});
       setState(() {
         _searchResults = results.cast<String>();
       });
+
+      for (String cardId in _searchResults) {
+        _fetchCardImage(cardId);
+      }
     } on PlatformException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to search cards: ${e.message}')));
     }
   }
 
-  Map<String, String> _parseFilters(List<String> filters) {
-    Map<String, String> criteria = {};
-    for (String filter in filters) {
-      List<String> parts = filter.split(':');
-      if (parts.length == 2) {
-        String key = parts[0].trim().toLowerCase();
-        String value = parts[1].trim();
-        criteria[key] = value;
-      }
-    }
-    return criteria;
-  }
-
-  void _addFilter(String filter) {
-    setState(() {
-      _filters.add(filter);
-    });
-  }
-
-  void _removeFilter(int index) {
-    setState(() {
-      _filters.removeAt(index);
-    });
-  }
-
-  void _fetchCardDetails(String cardId) async {
+  void _fetchCardImage(String cardId) async {
     const platform = MethodChannel('com.example/tcgdex');
     try {
-      final String cardName = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Card Name: $cardName')));
+      final Map<String, dynamic> cardDetails = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
+      final String imageUrl = cardDetails['image'] ?? '';
+      setState(() {
+        _cardImages[cardId] = imageUrl;
+      });
     } on PlatformException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch card details: ${e.message}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch card image: ${e.message}')));
     }
   }
 
@@ -69,7 +51,7 @@ class _SearchPageState extends State<SearchPage> {
         title: const Text('Search Cards'),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: _search,
           ),
         ],
@@ -81,39 +63,26 @@ class _SearchPageState extends State<SearchPage> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Enter filter (e.g., name: Pikachu)',
+                hintText: 'Enter card name (e.g., Snorlax)',
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    if (_searchController.text.isNotEmpty) {
-                      _addFilter(_searchController.text);
-                      _searchController.clear();
-                    }
-                  },
+                  icon: const Icon(Icons.search),
+                  onPressed: _search,
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8.0,
-              children: _filters.asMap().entries.map((entry) {
-                int index = entry.key;
-                String filter = entry.value;
-                return Chip(
-                  label: Text(filter),
-                  onDeleted: () => _removeFilter(index),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
             Expanded(
-              child: ListView(
-                children: _searchResults.map((id) {
+              child: ListView.builder(
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  String cardId = _searchResults[index];
+                  String imageUrl = _cardImages[cardId] ?? '';
+
                   return ListTile(
-                    title: Text(id),
-                    onTap: () => _fetchCardDetails(id),
+                    title: Text(cardId),
+                    subtitle: imageUrl.isNotEmpty ? Image.network(imageUrl) : null,
                   );
-                }).toList(),
+                },
               ),
             ),
           ],

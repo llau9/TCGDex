@@ -4,7 +4,7 @@ import 'home_screen.dart'; // Ensure HomeScreen is correctly imported
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({Key? key}) : super(key: key); // Ensure constructor is const
+  const SignInPage({super.key}); // Ensure constructor is const
 
   @override
   _SignInPageState createState() => _SignInPageState();
@@ -32,7 +32,7 @@ class _SignInPageState extends State<SignInPage> {
 
       if (userCredential.user != null) {
         // User is successfully authenticated, navigate to HomeScreen
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
       }
     } catch (e) {
       print(e);
@@ -85,7 +85,7 @@ class _SignInPageState extends State<SignInPage> {
     await userCredential.user?.updateDisplayName(nameController.text);
 
     // Navigate to HomeScreen
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
   } catch (e) {
     print('Error: $e');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
