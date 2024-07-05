@@ -17,17 +17,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Define a custom pastel red color
+    const pastelRed = Color(0xFFFF6961);
+
     return MaterialApp(
       title: 'Modern UI App',
       theme: ThemeData(
         primarySwatch: Colors.red,
+        primaryColor: pastelRed,
         appBarTheme: const AppBarTheme(
-          color: Colors.red,
+          color: pastelRed,
           iconTheme: IconThemeData(color: Colors.white),
           actionsIconTheme: IconThemeData(color: Colors.white),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          selectedItemColor: Colors.red,
+          selectedItemColor: pastelRed,
           unselectedItemColor: Colors.grey,
         ),
       ),

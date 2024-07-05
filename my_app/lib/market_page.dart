@@ -45,7 +45,7 @@ class _MarketPageState extends State<MarketPage> {
           children: <Widget>[
             const DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color:Color(0xFFFF6961),
               ),
               child: Text(
                 'Account Menu',

@@ -30,7 +30,8 @@ class _SearchPageState extends State<SearchPage> {
       });
     } on PlatformException catch (e) {
       print('Failed to check CSV load status: ${e.message}');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to check CSV load status: ${e.message}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to check CSV load status: ${e.message}')));
     }
   }
 
@@ -39,7 +40,8 @@ class _SearchPageState extends State<SearchPage> {
     String name = _searchController.text;
 
     if (!csvLoaded) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('CSV file not loaded yet')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CSV file not loaded yet')));
       return;
     }
 
@@ -54,22 +56,25 @@ class _SearchPageState extends State<SearchPage> {
       }
     } on PlatformException catch (e) {
       print('Failed to search cards: ${e.message}');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to search cards: ${e.message}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to search cards: ${e.message}')));
     }
   }
 
   void _fetchCardImage(String cardId) async {
     const platform = MethodChannel('com.example/tcgdex');
     try {
-      final Map<String, dynamic> cardDetails = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
-      final String imageUrl = cardDetails['image'] ?? '';
+      final Map<Object?, Object?> cardDetails =
+          await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
+      final String imageUrl = cardDetails['image'] as String? ?? '';
       setState(() {
         _cardImages[cardId] = imageUrl;
       });
       print('Fetched image URL for $cardId: $imageUrl');
     } on PlatformException catch (e) {
       print('Failed to fetch card image: ${e.message}');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch card image: ${e.message}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch card image: ${e.message}')));
     }
   }
 
@@ -101,18 +106,51 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  String cardId = _searchResults[index];
-                  String imageUrl = _cardImages[cardId] ?? '';
+              child: _searchResults.isEmpty
+                  ? Center(child: Text('No results found'))
+                  : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                        childAspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                      ),
+                      itemCount: _searchResults.length,
+                      itemBuilder: (context, index) {
+                        String cardId = _searchResults[index];
+                        String imageUrl = _cardImages[cardId] ?? '';
 
-                  return ListTile(
-                    title: Text(cardId),
-                    subtitle: imageUrl.isNotEmpty ? Image.network(imageUrl) : null,
-                  );
-                },
-              ),
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: AspectRatio(
+                                    aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                                    child: imageUrl.isNotEmpty
+                                        ? Image.network(
+                                            imageUrl,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return const Center(child: Text('Error loading image'));
+                                            },
+                                          )
+                                        : const Center(child: CircularProgressIndicator()),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  cardId,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 12.0),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

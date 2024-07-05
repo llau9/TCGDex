@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             const DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: Color(0xFFFFC1C1), // Use the pastel red color
               ),
               child: Text(
                 'Account Menu',
@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.red,
+        selectedItemColor: Color(0xFFFF6961), // Use the pastel red color
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
