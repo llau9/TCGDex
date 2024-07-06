@@ -10,6 +10,7 @@ import io.flutter.plugin.common.MethodChannel;
 import net.tcgdex.sdk.TCGdex;
 import net.tcgdex.sdk.models.Card;
 import net.tcgdex.sdk.models.CardResume;
+import net.tcgdex.sdk.models.SetResume;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
@@ -58,6 +59,9 @@ public class MainActivity extends FlutterActivity {
                                 Log.d(TAG, "isCSVLoaded called, returning: " + csvLoaded);
                                 result.success(csvLoaded);
                                 break;
+                            case "fetchAllSetLogos":
+                                fetchAllSetLogos(result);
+                                break;    
                             default:
                                 result.notImplemented();
                                 break;
@@ -84,7 +88,8 @@ public class MainActivity extends FlutterActivity {
 
                 String[] values;
                 while ((values = csvReader.readNext()) != null) {
-                    Log.d(TAG, "Reading line: " + Arrays.toString(values));
+                    // Comment out the line below to stop printing each line to the terminal
+                    // Log.d(TAG, "Reading line: " + Arrays.toString(values));
                     if (values.length != headers.length) {
                         runOnUiThread(() -> Toast.makeText(this, "Skipping malformed line", Toast.LENGTH_SHORT).show());
                         Log.d(TAG, "Malformed line: " + Arrays.toString(values));
@@ -193,6 +198,35 @@ public class MainActivity extends FlutterActivity {
             }
             Log.d(TAG, "Search results: " + candidateIds);
             result.success(candidateIds);
+        });
+    }
+
+    private void fetchAllSetLogos(MethodChannel.Result result) {
+        Future<?> future = executorService.submit(() -> {
+            TCGdex api = new TCGdex("en");
+            try {
+                Log.d(TAG, "Fetching all sets...");
+                SetResume[] setResumes = api.fetchSets();
+
+                if (setResumes == null || setResumes.length == 0) {
+                    Log.e(TAG, "No sets found.");
+                    result.error("UNAVAILABLE", "No sets found.", null);
+                    return;
+                }
+
+                List<String> logoUrls = new ArrayList<>();
+                for (SetResume setResume : setResumes) {
+                    String baseUrl = setResume.getLogo() + ".png";
+                    if (baseUrl != null && !baseUrl.isEmpty()) {
+                        logoUrls.add(baseUrl);
+                        Log.d(TAG, "Fetched set logo URL: " + baseUrl);
+                    }
+                }
+                result.success(logoUrls);
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching set logos: ", e);
+                result.error("UNAVAILABLE", "Error fetching set logos.", e);
+            }
         });
     }
 }

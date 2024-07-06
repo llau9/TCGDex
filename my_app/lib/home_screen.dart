@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'portfolio_page.dart';
@@ -6,26 +7,49 @@ import 'camera_page.dart';
 import 'social_page.dart';
 import 'settings_page.dart';
 import 'sign_in_page.dart';
-import 'market_page.dart'; // Import the MarketPage
-import 'search_page.dart'; // Import the SearchPage
+import 'market_page.dart';
+import 'search_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  List<String> _setLogos = [];
 
   static final List<Widget> _widgetOptions = <Widget>[
-    const HomeContent(),
+    HomeContent(logos: []),
     const MarketPage(),
     const CameraPage(),
     const PortfolioPage(),
     const SocialPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllSetLogos();
+  }
+
+  Future<void> _fetchAllSetLogos() async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final List<dynamic> logos = await platform.invokeMethod('fetchAllSetLogos');
+      print("Fetched logos from platform: $logos");
+      setState(() {
+        _setLogos = logos.cast<String>();
+      });
+      print("Updated state with logos: $_setLogos");
+    } on PlatformException catch (e) {
+      print("Failed to fetch set logos: '${e.message}'.");
+    } catch (e) {
+      print("Unknown error occurred while fetching set logos: '$e'.");
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -36,6 +60,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
+    List<Widget> _widgetOptionsWithLogos = <Widget>[
+      HomeContent(logos: _setLogos),
+      const MarketPage(),
+      const CameraPage(),
+      const PortfolioPage(),
+      const SocialPage(),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             const DrawerHeader(
               decoration: BoxDecoration(
-                color: Color(0xFFFFC1C1), // Use the pastel red color
+                color: Color(0xFFFF6961),
               ),
               child: Text(
                 'Account Menu',
@@ -112,9 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
+      body: _widgetOptionsWithLogos.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -139,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFFFF6961), // Use the pastel red color
+        selectedItemColor: Color(0xFFFFC1C1),
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
@@ -149,40 +179,58 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+  final List<String> logos;
+
+  const HomeContent({Key? key, required this.logos}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    print("Building HomeContent. Logos: $logos");
+    if (logos.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return GridView.builder(
       padding: const EdgeInsets.all(16.0),
-      children: const <Widget>[
-        HomeCard(title: 'Set 1'),
-        SizedBox(height: 16.0),
-        HomeCard(title: 'Set 2'),
-        SizedBox(height: 16.0),
-        HomeCard(title: 'Set 3'),
-      ],
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
+        childAspectRatio: 1, // Adjust based on your image aspect ratio
+      ),
+      itemCount: logos.length,
+      itemBuilder: (context, index) {
+        final String imageUrl = logos[index];
+        return HomeCard(imageUrl: imageUrl);
+      },
     );
   }
 }
 
 class HomeCard extends StatelessWidget {
-  final String title;
+  final String imageUrl;
 
-  const HomeCard({required this.title, super.key});
+  const HomeCard({required this.imageUrl, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      elevation: 4.0,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(
-          title,
-          style: const TextStyle(fontSize: 18.0),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        elevation: 4.0,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(child: Text('Error loading image'));
+              },
+            ),
+          ),
         ),
       ),
     );
