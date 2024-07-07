@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 
 class PortfolioPage extends StatefulWidget {
@@ -12,12 +13,14 @@ class PortfolioPage extends StatefulWidget {
 class _PortfolioPageState extends State<PortfolioPage> {
   String userName = "Anonymous";
   List<String> setSymbols = [];
+  List<Map<String, dynamic>> portfolioCards = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUserName();
     _fetchSetSymbols();
+    _fetchPortfolioCards();
   }
 
   Future<void> _fetchUserName() async {
@@ -39,6 +42,36 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
   }
 
+  Future<void> _fetchPortfolioCards() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      CollectionReference portfolios = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('portfolio');
+
+      final QuerySnapshot portfolioSnapshot = await portfolios.get();
+      for (QueryDocumentSnapshot doc in portfolioSnapshot.docs) {
+        final List<String> cardIds = List<String>.from(doc['cardIds']);
+        await _fetchCardDetails(cardIds);
+      }
+    }
+  }
+
+  Future<void> _fetchCardDetails(List<String> cardIds) async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      for (String cardId in cardIds) {
+        final Map<String, dynamic> cardDetails = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
+        setState(() {
+          portfolioCards.add(cardDetails);
+        });
+      }
+    } on PlatformException catch (e) {
+      print("Failed to fetch card details: '${e.message}'.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +80,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           children: [
             ProfileSection(userName: userName),
             SetSymbolsSection(setSymbols: setSymbols),
-            const CardsGridSection(),
+            CardsGridSection(cards: portfolioCards),
           ],
         ),
       ),
@@ -103,6 +136,7 @@ class SetSymbolsSection extends StatelessWidget {
             child: CircleAvatar(
               radius: 30,
               backgroundImage: NetworkImage(setSymbols[index]),
+              backgroundColor: Colors.transparent, // Ensure transparent background to see full image
             ),
           );
         },
@@ -112,7 +146,9 @@ class SetSymbolsSection extends StatelessWidget {
 }
 
 class CardsGridSection extends StatelessWidget {
-  const CardsGridSection({super.key});
+  final List<Map<String, dynamic>> cards;
+
+  const CardsGridSection({super.key, required this.cards});
 
   @override
   Widget build(BuildContext context) {
@@ -125,16 +161,31 @@ class CardsGridSection extends StatelessWidget {
           crossAxisCount: 3,
           crossAxisSpacing: 16.0,
           mainAxisSpacing: 16.0,
+          childAspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
         ),
-        itemCount: 12,
+        itemCount: cards.length,
         itemBuilder: (context, index) {
+          final card = cards[index];
           return Card(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.image, size: 50, color: Colors.grey),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                    child: card['image'] != null
+                        ? Image.network(
+                            card['image'],
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(child: Text('Error loading image'));
+                            },
+                          )
+                        : const Icon(Icons.image, size: 50, color: Colors.grey),
+                  ),
+                ),
                 const SizedBox(height: 8.0),
-                Text('Card ${index + 1}'),
+                Text(card['name'] ?? 'Unknown Card', textAlign: TextAlign.center),
               ],
             ),
           );
