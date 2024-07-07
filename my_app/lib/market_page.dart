@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'profile_page.dart';
 import 'cart_page.dart';
+import 'listing_page.dart';
 
 class MarketPage extends StatefulWidget {
   const MarketPage({super.key});
@@ -180,16 +181,26 @@ class WishlistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: AspectRatio(
-          aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-          child: imageUrl.isNotEmpty
-              ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Text('Error loading image'));
-                })
-              : const Center(child: Text('No image URL')),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ListingPage(imageUrl: imageUrl),
+          ),
+        );
+      },
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: AspectRatio(
+            aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+            child: imageUrl.isNotEmpty
+                ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Text('Error loading image'));
+                  })
+                : const Center(child: Text('No image URL')),
+          ),
         ),
       ),
     );
@@ -203,16 +214,26 @@ class StorefrontCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: AspectRatio(
-          aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-          child: imageUrl.isNotEmpty
-              ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Text('Error loading image'));
-                })
-              : const Center(child: Text('No image URL')),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ListingPage(imageUrl: imageUrl),
+          ),
+        );
+      },
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: AspectRatio(
+            aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+            child: imageUrl.isNotEmpty
+                ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Text('Error loading image'));
+                  })
+                : const Center(child: Text('No image URL')),
+          ),
         ),
       ),
     );
