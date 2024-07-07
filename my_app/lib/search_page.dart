@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'card_detail_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -67,14 +68,43 @@ class _SearchPageState extends State<SearchPage> {
       final Map<Object?, Object?> cardDetails =
           await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
       final String imageUrl = cardDetails['image'] as String? ?? '';
-      setState(() {
-        _cardImages[cardId] = imageUrl;
-      });
-      print('Fetched image URL for $cardId: $imageUrl');
+      if (imageUrl.isNotEmpty) {
+        setState(() {
+          _cardImages[cardId] = imageUrl;
+        });
+        print('Fetched image URL for $cardId: $imageUrl');
+      } else {
+        print('No image URL found for $cardId');
+      }
     } on PlatformException catch (e) {
       print('Failed to fetch card image: ${e.message}');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to fetch card image: ${e.message}')));
+    }
+  }
+
+  void _navigateToCardDetails(String cardId) async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final Map<Object?, Object?> cardDetailsMap =
+          await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
+      final Map<String, String> cardDetails = cardDetailsMap.map((key, value) => MapEntry(key.toString(), value.toString()));
+      final String imageUrl = cardDetails['image'] ?? '';
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CardDetailPage(
+            cardId: cardId,
+            imageUrl: imageUrl,
+            cardDetails: cardDetails,
+          ),
+        ),
+      );
+    } on PlatformException catch (e) {
+      print('Failed to fetch card details: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch card details: ${e.message}')));
     }
   }
 
@@ -120,32 +150,35 @@ class _SearchPageState extends State<SearchPage> {
                         String cardId = _searchResults[index];
                         String imageUrl = _cardImages[cardId] ?? '';
 
-                        return Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: AspectRatio(
-                                    aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-                                    child: imageUrl.isNotEmpty
-                                        ? Image.network(
-                                            imageUrl,
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return const Center(child: Text('Error loading image'));
-                                            },
-                                          )
-                                        : const Center(child: CircularProgressIndicator()),
+                        return GestureDetector(
+                          onTap: () => _navigateToCardDetails(cardId),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: AspectRatio(
+                                      aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                                      child: imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return const Center(child: Text('Error loading image'));
+                                              },
+                                            )
+                                          : const Center(child: CircularProgressIndicator()),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  cardId,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 12.0),
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    cardId,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 12.0),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
