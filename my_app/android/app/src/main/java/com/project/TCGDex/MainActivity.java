@@ -61,6 +61,9 @@ public class MainActivity extends FlutterActivity {
                                 break;
                             case "fetchAllSetLogos":
                                 fetchAllSetLogos(result);
+                                break;
+                            case "fetchAllSetSymbols":
+                                fetchAllSetSymbols(result);
                                 break;    
                             default:
                                 result.notImplemented();
@@ -88,8 +91,6 @@ public class MainActivity extends FlutterActivity {
 
                 String[] values;
                 while ((values = csvReader.readNext()) != null) {
-                    // Comment out the line below to stop printing each line to the terminal
-                    // Log.d(TAG, "Reading line: " + Arrays.toString(values));
                     if (values.length != headers.length) {
                         runOnUiThread(() -> Toast.makeText(this, "Skipping malformed line", Toast.LENGTH_SHORT).show());
                         Log.d(TAG, "Malformed line: " + Arrays.toString(values));
@@ -226,6 +227,35 @@ public class MainActivity extends FlutterActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching set logos: ", e);
                 result.error("UNAVAILABLE", "Error fetching set logos.", e);
+            }
+        });
+    }
+
+    private void fetchAllSetSymbols(MethodChannel.Result result) {
+        Future<?> future = executorService.submit(() -> {
+            TCGdex api = new TCGdex("en");
+            try {
+                Log.d(TAG, "Fetching all sets...");
+                SetResume[] setResumes = api.fetchSets();
+
+                if (setResumes == null || setResumes.length == 0) {
+                    Log.e(TAG, "No sets found.");
+                    result.error("UNAVAILABLE", "No sets found.", null);
+                    return;
+                }
+
+                List<String> symbolUrls = new ArrayList<>();
+                for (SetResume setResume : setResumes) {
+                    String baseUrl = setResume.getSymbol() + ".png";
+                    if (baseUrl != null && !baseUrl.isEmpty()) {
+                        symbolUrls.add(baseUrl);
+                        Log.d(TAG, "Fetched set symbol URL: " + baseUrl);
+                    }
+                }
+                result.success(symbolUrls);
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching set symbols: ", e);
+                result.error("UNAVAILABLE", "Error fetching set symbols.", e);
             }
         });
     }

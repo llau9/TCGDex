@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 
 class PortfolioPage extends StatefulWidget {
   const PortfolioPage({super.key});
@@ -10,11 +11,13 @@ class PortfolioPage extends StatefulWidget {
 
 class _PortfolioPageState extends State<PortfolioPage> {
   String userName = "Anonymous";
+  List<String> setSymbols = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUserName();
+    _fetchSetSymbols();
   }
 
   Future<void> _fetchUserName() async {
@@ -24,6 +27,18 @@ class _PortfolioPageState extends State<PortfolioPage> {
     });
   }
 
+  Future<void> _fetchSetSymbols() async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final List<dynamic> result = await platform.invokeMethod('fetchAllSetSymbols');
+      setState(() {
+        setSymbols = result.cast<String>();
+      });
+    } on PlatformException catch (e) {
+      print("Failed to fetch set symbols: '${e.message}'.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,6 +46,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         child: Column(
           children: [
             ProfileSection(userName: userName),
+            SetSymbolsSection(setSymbols: setSymbols),
             const CardsGridSection(),
           ],
         ),
@@ -64,6 +80,32 @@ class ProfileSection extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class SetSymbolsSection extends StatelessWidget {
+  final List<String> setSymbols;
+
+  const SetSymbolsSection({super.key, required this.setSymbols});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 80, // Adjust height as needed
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: setSymbols.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: CircleAvatar(
+              radius: 30,
+              backgroundImage: NetworkImage(setSymbols[index]),
+            ),
+          );
+        },
       ),
     );
   }
