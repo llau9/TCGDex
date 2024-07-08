@@ -45,28 +45,27 @@ class _PortfolioPageState extends State<PortfolioPage> {
   Future<void> _fetchPortfolioCards() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      CollectionReference portfolios = FirebaseFirestore.instance
+      CollectionReference portfolio = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('portfolio');
 
-      final QuerySnapshot portfolioSnapshot = await portfolios.get();
+      final QuerySnapshot portfolioSnapshot = await portfolio.get();
       for (QueryDocumentSnapshot doc in portfolioSnapshot.docs) {
-        final List<String> cardIds = List<String>.from(doc['cardIds']);
-        await _fetchCardDetails(cardIds);
+        final String cardId = doc['cardId'];
+        await _fetchCardDetails(cardId);
       }
     }
   }
 
-  Future<void> _fetchCardDetails(List<String> cardIds) async {
+  Future<void> _fetchCardDetails(String cardId) async {
     const platform = MethodChannel('com.example/tcgdex');
     try {
-      for (String cardId in cardIds) {
-        final Map<String, dynamic> cardDetails = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
-        setState(() {
-          portfolioCards.add(cardDetails);
-        });
-      }
+      final Map<dynamic, dynamic> result = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
+      final Map<String, dynamic> cardDetails = result.map((key, value) => MapEntry(key as String, value));
+      setState(() {
+        portfolioCards.add(cardDetails);
+      });
     } on PlatformException catch (e) {
       print("Failed to fetch card details: '${e.message}'.");
     }
