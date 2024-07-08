@@ -14,6 +14,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   String userName = "Anonymous";
   List<String> setSymbols = [];
   List<Map<String, dynamic>> portfolioCards = [];
+  List<Map<String, dynamic>> setCards = [];
 
   @override
   void initState() {
@@ -62,13 +63,30 @@ class _PortfolioPageState extends State<PortfolioPage> {
     const platform = MethodChannel('com.example/tcgdex');
     try {
       final Map<dynamic, dynamic> result = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
-      final Map<String, dynamic> cardDetails = result.map((key, value) => MapEntry(key as String, value));
+      final Map<String, dynamic> cardDetails = Map<String, dynamic>.from(result);
       setState(() {
         portfolioCards.add(cardDetails);
       });
     } on PlatformException catch (e) {
       print("Failed to fetch card details: '${e.message}'.");
     }
+  }
+
+  Future<void> _fetchCardsBySetId(String setId) async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final List<dynamic> result = await platform.invokeMethod('fetchCardsBySetId', {'setId': setId});
+      final List<Map<String, dynamic>> cards = result.map((dynamic item) => Map<String, dynamic>.from(item)).toList();
+      setState(() {
+        setCards = cards;
+      });
+    } on PlatformException catch (e) {
+      print("Failed to fetch cards by set ID: '${e.message}'.");
+    }
+  }
+
+  void _onSetSymbolClicked(String setId) {
+    _fetchCardsBySetId(setId);
   }
 
   @override
@@ -78,8 +96,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
         child: Column(
           children: [
             ProfileSection(userName: userName),
-            SetSymbolsSection(setSymbols: setSymbols),
-            CardsGridSection(cards: portfolioCards),
+            SetSymbolsSection(setSymbols: setSymbols, onSetSymbolClicked: _onSetSymbolClicked),
+            CardsGridSection(cards: setCards.isNotEmpty ? setCards : portfolioCards),
           ],
         ),
       ),
@@ -119,8 +137,9 @@ class ProfileSection extends StatelessWidget {
 
 class SetSymbolsSection extends StatelessWidget {
   final List<String> setSymbols;
+  final Function(String) onSetSymbolClicked;
 
-  const SetSymbolsSection({super.key, required this.setSymbols});
+  const SetSymbolsSection({super.key, required this.setSymbols, required this.onSetSymbolClicked});
 
   @override
   Widget build(BuildContext context) {
@@ -130,12 +149,18 @@ class SetSymbolsSection extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemCount: setSymbols.length,
         itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CircleAvatar(
-              radius: 30,
-              backgroundImage: NetworkImage(setSymbols[index]),
-              backgroundColor: Colors.transparent, // Ensure transparent background to see full image
+          // Extract the set ID from the URL
+          final uri = Uri.parse(setSymbols[index]);
+          final setId = uri.pathSegments.length >= 3 ? uri.pathSegments[2] : 'unknown';
+          return GestureDetector(
+            onTap: () => onSetSymbolClicked(setId),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: CircleAvatar(
+                radius: 30,
+                backgroundImage: NetworkImage(setSymbols[index]),
+                backgroundColor: Colors.transparent, // Ensure transparent background to see full image
+              ),
             ),
           );
         },

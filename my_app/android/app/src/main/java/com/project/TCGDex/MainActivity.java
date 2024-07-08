@@ -10,6 +10,7 @@ import io.flutter.plugin.common.MethodChannel;
 import net.tcgdex.sdk.TCGdex;
 import net.tcgdex.sdk.models.Card;
 import net.tcgdex.sdk.models.CardResume;
+import net.tcgdex.sdk.models.Set;
 import net.tcgdex.sdk.models.SetResume;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
@@ -64,7 +65,11 @@ public class MainActivity extends FlutterActivity {
                                 break;
                             case "fetchAllSetSymbols":
                                 fetchAllSetSymbols(result);
-                                break;    
+                                break;
+                            case "fetchCardsBySetId":
+                                String setId = call.argument("setId");
+                                fetchCardsBySetId(setId, result);
+                                break;       
                             default:
                                 result.notImplemented();
                                 break;
@@ -131,18 +136,24 @@ public class MainActivity extends FlutterActivity {
                 }
 
                 Random rand = new Random();
-                int randomIndex = rand.nextInt(cardResumes.length);
-                CardResume randomCard = cardResumes[randomIndex];
+                String imageUrl = null;
+                for (int i = 0; i < cardResumes.length; i++) {
+                    int randomIndex = rand.nextInt(cardResumes.length);
+                    CardResume randomCard = cardResumes[randomIndex];
 
-                String baseUrl = randomCard.getImage();
-                if (baseUrl == null || baseUrl.isEmpty()) {
-                    Log.e(TAG, "Selected card has no base image URL.");
-                    result.error("UNAVAILABLE", "Card image not available.", null);
-                    return;
+                    String baseUrl = randomCard.getImage();
+                    if (baseUrl != null && !baseUrl.isEmpty()) {
+                        imageUrl = baseUrl + "/high.png";
+                        break;
+                    }
                 }
 
-                String imageUrl = baseUrl + "/high.png";
-                result.success(imageUrl);
+                if (imageUrl == null) {
+                    Log.e(TAG, "No card with a valid image URL found.");
+                    result.error("UNAVAILABLE", "Card image not available.", null);
+                } else {
+                    result.success(imageUrl);
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching card image: ", e);
                 result.error("UNAVAILABLE", "Error fetching card image.", e);
@@ -256,6 +267,35 @@ public class MainActivity extends FlutterActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching set symbols: ", e);
                 result.error("UNAVAILABLE", "Error fetching set symbols.", e);
+            }
+        });
+    }
+
+    private void fetchCardsBySetId(String setId, MethodChannel.Result result) {
+        Future<?> future = executorService.submit(() -> {
+            TCGdex api = new TCGdex("en");
+            try {
+                Log.d(TAG, "Fetching set for ID: " + setId);
+                Set set = api.fetchSet(setId);
+
+                if (set == null) {
+                    Log.e(TAG, "Set not found.");
+                    result.error("UNAVAILABLE", "Set not found.", null);
+                    return;
+                }
+
+                List<Map<String, String>> cards = new ArrayList<>();
+                for (CardResume card : set.getCards()) {
+                    Map<String, String> cardData = new HashMap<>();
+                    cardData.put("id", card.getId());
+                    cardData.put("name", card.getName());
+                    cardData.put("image", card.getImage() + "/high.png");
+                    cards.add(cardData);
+                }
+                result.success(cards);
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching cards by set ID: ", e);
+                result.error("UNAVAILABLE", "Error fetching cards by set ID.", e);
             }
         });
     }
