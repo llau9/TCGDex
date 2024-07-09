@@ -13,16 +13,20 @@ class PortfolioPage extends StatefulWidget {
 
 class _PortfolioPageState extends State<PortfolioPage> {
   String userName = "Anonymous";
+  String selectedSeriesName = "Select Series";
+  List<String> allSetSymbols = [];
   List<String> setSymbols = [];
   List<Map<String, dynamic>> portfolioCards = [];
   List<Map<String, dynamic>> setCards = [];
   Set<String> ownedCardIds = Set<String>();
+  List<Map<String, String>> seriesList = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUserName();
-    _fetchSetSymbols();
+    _fetchSeries();
+    _fetchAllSetSymbols();
     _fetchPortfolioCards();
   }
 
@@ -33,12 +37,26 @@ class _PortfolioPageState extends State<PortfolioPage> {
     });
   }
 
-  Future<void> _fetchSetSymbols() async {
+  Future<void> _fetchSeries() async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final List<dynamic> result = await platform.invokeMethod('fetchSeries');
+      setState(() {
+        seriesList = result.map((dynamic series) => Map<String, String>.from(series)).toList();
+        seriesList.insert(0, {'id': 'recently_added', 'name': 'Recently Added'});
+      });
+    } on PlatformException catch (e) {
+      print("Failed to fetch series: '${e.message}'.");
+    }
+  }
+
+  Future<void> _fetchAllSetSymbols() async {
     const platform = MethodChannel('com.example/tcgdex');
     try {
       final List<dynamic> result = await platform.invokeMethod('fetchAllSetSymbols');
       setState(() {
-        setSymbols = result.cast<String>();
+        allSetSymbols = result.cast<String>();
+        setSymbols = allSetSymbols; // Display all sets by default
       });
     } on PlatformException catch (e) {
       print("Failed to fetch set symbols: '${e.message}'.");
@@ -76,15 +94,22 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Future<void> _fetchCardsBySetId(String setId) async {
-    const platform = MethodChannel('com.example/tcgdex');
-    try {
-      final List<dynamic> result = await platform.invokeMethod('fetchCardsBySetId', {'setId': setId});
-      final List<Map<String, dynamic>> cards = result.map((dynamic item) => Map<String, dynamic>.from(item)).toList();
+    if (setId == 'recently_added') {
       setState(() {
-        setCards = cards;
+        setSymbols = allSetSymbols;
+        setCards = [];
       });
-    } on PlatformException catch (e) {
-      print("Failed to fetch cards by set ID: '${e.message}'.");
+    } else {
+      const platform = MethodChannel('com.example/tcgdex');
+      try {
+        final List<dynamic> result = await platform.invokeMethod('fetchCardsBySetId', {'setId': setId});
+        final List<Map<String, dynamic>> cards = result.map((dynamic item) => Map<String, dynamic>.from(item)).toList();
+        setState(() {
+          setCards = cards;
+        });
+      } on PlatformException catch (e) {
+        print("Failed to fetch cards by set ID: '${e.message}'.");
+      }
     }
   }
 
@@ -93,7 +118,6 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   void _onCardClicked(Map<String, dynamic> card) {
-    // Convert the dynamic map to a map of strings
     final Map<String, String> cardDetails = card.map((key, value) => MapEntry(key.toString(), value.toString()));
 
     Navigator.push(
@@ -108,14 +132,61 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
+  Future<void> _fetchSetSymbolsBySeries(String seriesId) async {
+    if (seriesId == 'recently_added') {
+      setState(() {
+        setSymbols = allSetSymbols;
+        setCards = [];
+      });
+    } else {
+      const platform = MethodChannel('com.example/tcgdex');
+      try {
+        final List<dynamic> result = await platform.invokeMethod('fetchSerie', {'seriesId': seriesId});
+        final List<String> setSymbols = result.map((dynamic set) => set['symbol'].toString() + ".png").toList();
+        setState(() {
+          this.setSymbols = setSymbols;
+          this.setCards = [];
+        });
+      } on PlatformException catch (e) {
+        print("Failed to fetch sets by series ID: '${e.message}'.");
+      }
+    }
+  }
+
+  void _onSeriesSelected(String seriesId, String seriesName) {
+    setState(() {
+      selectedSeriesName = seriesName;
+    });
+    _fetchSetSymbolsBySeries(seriesId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ProfileSection(userName: userName),
-            SetSymbolsSection(setSymbols: setSymbols, onSetSymbolClicked: _onSetSymbolClicked),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: ProfileSection(userName: userName),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: SeriesDropdown(
+                    selectedSeriesName: selectedSeriesName,
+                    seriesList: seriesList,
+                    onSeriesSelected: _onSeriesSelected,
+                  ),
+                ),
+              ],
+            ),
+            SetSymbolsSection(
+              setSymbols: setSymbols,
+              onSetSymbolClicked: _onSetSymbolClicked,
+              showRecentlyAdded: true,
+            ),
             CardsGridSection(
               cards: setCards.isNotEmpty ? setCards : portfolioCards,
               onCardClicked: _onCardClicked,
@@ -136,21 +207,23 @@ class ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(8.0),  // Reduced padding
       child: Row(
         children: [
           const CircleAvatar(
-            radius: 40,
+            radius: 30,  // Reduced radius
             backgroundImage: AssetImage('assets/profile.jpg'),
           ),
-          const SizedBox(width: 16.0),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(userName, style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
-              Text('Level 12', style: TextStyle(color: Colors.grey[600])),
-              Text('360/500 XP', style: TextStyle(color: Colors.grey[600])),
-            ],
+          const SizedBox(width: 8.0),  // Reduced width
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(userName, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),  // Reduced font size
+                Text('Level 12', style: TextStyle(color: Colors.grey[600])),
+                Text('360/500 XP', style: TextStyle(color: Colors.grey[600])),
+              ],
+            ),
           ),
         ],
       ),
@@ -158,11 +231,49 @@ class ProfileSection extends StatelessWidget {
   }
 }
 
+class SeriesDropdown extends StatelessWidget {
+  final String selectedSeriesName;
+  final List<Map<String, String>> seriesList;
+  final Function(String, String) onSeriesSelected;
+
+  const SeriesDropdown({
+    super.key,
+    required this.selectedSeriesName,
+    required this.seriesList,
+    required this.onSeriesSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButton<String>(
+      hint: Text(selectedSeriesName),
+      items: seriesList.map((series) {
+        return DropdownMenuItem<String>(
+          value: series['id'],
+          child: Text(series['name']!),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          final selectedSeries = seriesList.firstWhere((series) => series['id'] == newValue);
+          onSeriesSelected(newValue, selectedSeries['name']!);
+        }
+      },
+    );
+  }
+}
+
 class SetSymbolsSection extends StatelessWidget {
   final List<String> setSymbols;
   final Function(String) onSetSymbolClicked;
+  final bool showRecentlyAdded;
 
-  const SetSymbolsSection({super.key, required this.setSymbols, required this.onSetSymbolClicked});
+  const SetSymbolsSection({
+    super.key,
+    required this.setSymbols,
+    required this.onSetSymbolClicked,
+    this.showRecentlyAdded = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -170,22 +281,46 @@ class SetSymbolsSection extends StatelessWidget {
       height: 80, // Adjust height as needed
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: setSymbols.length,
+        itemCount: setSymbols.length + (showRecentlyAdded ? 1 : 0),
         itemBuilder: (context, index) {
-          // Extract the set ID from the URL
-          final uri = Uri.parse(setSymbols[index]);
-          final setId = uri.pathSegments.length >= 3 ? uri.pathSegments[2] : 'unknown';
-          return GestureDetector(
-            onTap: () => onSetSymbolClicked(setId),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: CircleAvatar(
-                radius: 30,
-                backgroundImage: NetworkImage(setSymbols[index]),
-                backgroundColor: Colors.transparent, // Ensure transparent background to see full image
+          if (showRecentlyAdded && index == 0) {
+            return GestureDetector(
+              onTap: () => onSetSymbolClicked('recently_added'),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.new_releases, color: Colors.white),
+                ),
               ),
-            ),
-          );
+            );
+          } else {
+            final symbolIndex = showRecentlyAdded ? index - 1 : index;
+            // Extract the set ID from the URL
+            final uri = Uri.parse(setSymbols[symbolIndex]);
+            final setId = uri.pathSegments.length >= 3 ? uri.pathSegments[2] : 'unknown';
+            return GestureDetector(
+              onTap: () => onSetSymbolClicked(setId),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: NetworkImage(setSymbols[symbolIndex]),
+                  backgroundColor: Colors.transparent, // Ensure transparent background to see full image
+                  onBackgroundImageError: (exception, stackTrace) {
+                    print("Error loading image for $setId");
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black, width: 2.0), // Black outline
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
         },
       ),
     );

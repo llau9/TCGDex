@@ -12,6 +12,8 @@ import net.tcgdex.sdk.models.Card;
 import net.tcgdex.sdk.models.CardResume;
 import net.tcgdex.sdk.models.Set;
 import net.tcgdex.sdk.models.SetResume;
+import net.tcgdex.sdk.models.Serie;
+import net.tcgdex.sdk.models.SerieResume;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
@@ -35,10 +37,12 @@ public class MainActivity extends FlutterActivity {
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private List<Map<String, String>> cardData = new ArrayList<>();
     private boolean csvLoaded = false;
+    private TCGdex api;
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
+        api = new TCGdex("en");
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
             .setMethodCallHandler(
                 (call, result) -> {
@@ -69,7 +73,14 @@ public class MainActivity extends FlutterActivity {
                             case "fetchCardsBySetId":
                                 String setId = call.argument("setId");
                                 fetchCardsBySetId(setId, result);
-                                break;       
+                                break;
+                            case "fetchSeries":
+                                fetchSeries(result);
+                                break;
+                            case "fetchSerie":
+                                String serieId = call.argument("seriesId");
+                                fetchSerie(serieId, result);
+                                break;
                             default:
                                 result.notImplemented();
                                 break;
@@ -124,7 +135,6 @@ public class MainActivity extends FlutterActivity {
 
     private void fetchRandomCardImage(MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
-            TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching cards...");
                 CardResume[] cardResumes = api.fetchCards();
@@ -163,7 +173,6 @@ public class MainActivity extends FlutterActivity {
 
     private void fetchCardDetails(String cardId, MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
-            TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching card details for ID: " + cardId);
                 Card card = api.fetchCard(cardId);
@@ -215,7 +224,6 @@ public class MainActivity extends FlutterActivity {
 
     private void fetchAllSetLogos(MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
-            TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching all sets...");
                 SetResume[] setResumes = api.fetchSets();
@@ -244,7 +252,6 @@ public class MainActivity extends FlutterActivity {
 
     private void fetchAllSetSymbols(MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
-            TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching all sets...");
                 SetResume[] setResumes = api.fetchSets();
@@ -273,7 +280,6 @@ public class MainActivity extends FlutterActivity {
 
     private void fetchCardsBySetId(String setId, MethodChannel.Result result) {
         Future<?> future = executorService.submit(() -> {
-            TCGdex api = new TCGdex("en");
             try {
                 Log.d(TAG, "Fetching set for ID: " + setId);
                 Set set = api.fetchSet(setId);
@@ -296,6 +302,62 @@ public class MainActivity extends FlutterActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching cards by set ID: ", e);
                 result.error("UNAVAILABLE", "Error fetching cards by set ID.", e);
+            }
+        });
+    }
+
+    private void fetchSeries(MethodChannel.Result result) {
+        Future<?> future = executorService.submit(() -> {
+            try {
+                Log.d(TAG, "Fetching all series...");
+                SerieResume[] seriesResumes = api.fetchSeries();
+
+                if (seriesResumes == null || seriesResumes.length == 0) {
+                    Log.e(TAG, "No series found.");
+                    result.error("UNAVAILABLE", "No series found.", null);
+                    return;
+                }
+
+                List<Map<String, String>> seriesList = new ArrayList<>();
+                for (SerieResume serie : seriesResumes) {
+                    Map<String, String> serieData = new HashMap<>();
+                    serieData.put("id", serie.getId());
+                    serieData.put("name", serie.getName());
+                    seriesList.add(serieData);
+                }
+                result.success(seriesList);
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching series: ", e);
+                result.error("UNAVAILABLE", "Error fetching series.", e);
+            }
+        });
+    }
+
+    private void fetchSerie(String serieId, MethodChannel.Result result) {
+        Future<?> future = executorService.submit(() -> {
+            try {
+                Log.d(TAG, "Fetching serie for ID: " + serieId);
+                Serie serie = api.fetchSerie(serieId);
+
+                if (serie == null) {
+                    Log.e(TAG, "Serie not found.");
+                    result.error("UNAVAILABLE", "Serie not found.", null);
+                    return;
+                }
+
+                List<Map<String, String>> setsList = new ArrayList<>();
+                for (SetResume set : serie.getSets()) {
+                    Map<String, String> setData = new HashMap<>();
+                    setData.put("id", set.getId());
+                    setData.put("name", set.getName());
+                    setData.put("logo", set.getLogo());
+                    setData.put("symbol", set.getSymbol());
+                    setsList.add(setData);
+                }
+                result.success(setsList);
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching serie: ", e);
+                result.error("UNAVAILABLE", "Error fetching serie.", e);
             }
         });
     }
