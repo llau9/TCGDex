@@ -16,6 +16,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   List<String> setSymbols = [];
   List<Map<String, dynamic>> portfolioCards = [];
   List<Map<String, dynamic>> setCards = [];
+  Set<String> ownedCardIds = Set<String>();
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       final QuerySnapshot portfolioSnapshot = await portfolio.get();
       for (QueryDocumentSnapshot doc in portfolioSnapshot.docs) {
         final String cardId = doc['cardId'];
+        ownedCardIds.add(cardId);  // Add cardId to the set of owned cards
         await _fetchCardDetails(cardId);
       }
     }
@@ -114,7 +116,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
           children: [
             ProfileSection(userName: userName),
             SetSymbolsSection(setSymbols: setSymbols, onSetSymbolClicked: _onSetSymbolClicked),
-            CardsGridSection(cards: setCards.isNotEmpty ? setCards : portfolioCards, onCardClicked: _onCardClicked),
+            CardsGridSection(
+              cards: setCards.isNotEmpty ? setCards : portfolioCards,
+              onCardClicked: _onCardClicked,
+              ownedCardIds: ownedCardIds,
+            ),
           ],
         ),
       ),
@@ -189,8 +195,9 @@ class SetSymbolsSection extends StatelessWidget {
 class CardsGridSection extends StatelessWidget {
   final List<Map<String, dynamic>> cards;
   final Function(Map<String, dynamic>) onCardClicked;
+  final Set<String> ownedCardIds;
 
-  const CardsGridSection({super.key, required this.cards, required this.onCardClicked});
+  const CardsGridSection({super.key, required this.cards, required this.onCardClicked, required this.ownedCardIds});
 
   @override
   Widget build(BuildContext context) {
@@ -208,28 +215,49 @@ class CardsGridSection extends StatelessWidget {
         itemCount: cards.length,
         itemBuilder: (context, index) {
           final card = cards[index];
+          final bool isOwned = ownedCardIds.contains(card['id']);
+
           return GestureDetector(
             onTap: () => onCardClicked(card),
             child: Card(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                side: BorderSide(
+                  color: isOwned ? Colors.green : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Stack(
                 children: [
-                  Expanded(
-                    child: AspectRatio(
-                      aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-                      child: card['image'] != null
-                          ? Image.network(
-                              card['image'],
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(child: Text('Error loading image'));
-                              },
-                            )
-                          : const Icon(Icons.image, size: 50, color: Colors.grey),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: AspectRatio(
+                          aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                          child: card['image'] != null
+                              ? Image.network(
+                                  card['image'],
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(child: Text('Error loading image'));
+                                  },
+                                )
+                              : const Icon(Icons.image, size: 50, color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Text(card['name'] ?? 'Unknown Card', textAlign: TextAlign.center),
+                    ],
+                  ),
+                  Positioned(
+                    top: 8.0,
+                    right: 8.0,
+                    child: Icon(
+                      isOwned ? Icons.check_circle : Icons.check_circle_outline,
+                      color: isOwned ? Colors.green : Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 8.0),
-                  Text(card['name'] ?? 'Unknown Card', textAlign: TextAlign.center),
                 ],
               ),
             ),

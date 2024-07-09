@@ -9,6 +9,7 @@ import 'settings_page.dart';
 import 'sign_in_page.dart';
 import 'market_page.dart';
 import 'search_page.dart';
+import 'messaging_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -72,16 +73,26 @@ class HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('TCGDex'),
+        centerTitle: true, // Center the title
         leading: IconButton(
-          icon: const Icon(Icons.search),
+          icon: const Icon(Icons.message),
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const SearchPage()),
+              MaterialPageRoute(builder: (context) => const MessagingPage()),
             );
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchPage()),
+              );
+            },
+          ),
           Builder(
             builder: (context) {
               return IconButton(
