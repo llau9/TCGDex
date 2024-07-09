@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'profile_page.dart';
 import 'cart_page.dart';
 import 'listing_page.dart';
@@ -15,14 +16,20 @@ class MarketPage extends StatefulWidget {
 
 class _MarketPageState extends State<MarketPage> {
   static const platform = MethodChannel('com.example/tcgdex');
-  late Future<List<String>> wishlistImages;
   late Future<List<String>> storefrontImages;
+  final StreamController<List<String>> _wishlistImagesController = StreamController<List<String>>();
 
   @override
   void initState() {
     super.initState();
-    wishlistImages = fetchWishlistImages();
     storefrontImages = fetchRandomCardImages(4); // Fetch 4 images for the storefront
+    _fetchWishlistImages();
+  }
+
+  @override
+  void dispose() {
+    _wishlistImagesController.close();
+    super.dispose();
   }
 
   Future<List<String>> fetchRandomCardImages(int count) async {
@@ -39,38 +46,29 @@ class _MarketPageState extends State<MarketPage> {
     return images;
   }
 
-  Future<List<String>> fetchWishlistImages() async {
-    List<String> images = [];
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('portfolio')
-            .where('isInWishlist', isEqualTo: true)
-            .get();
-
+  Future<void> _fetchWishlistImages() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('wishlist')
+          .snapshots()
+          .listen((snapshot) async {
+        List<String> images = [];
         for (var doc in snapshot.docs) {
-          final String cardId = doc['cardId'];
-          // Fetch the card details using the cardId
+          final String cardId = doc.id;
           final String imageUrl = await fetchCardImage(cardId);
           if (imageUrl.isNotEmpty) {
             images.add(imageUrl);
           }
         }
-        print("Total wishlist images fetched: ${images.length}");
-      } else {
-        print("No user is currently signed in.");
-      }
-    } catch (e) {
-      print("Failed to fetch wishlist images: $e");
+        _wishlistImagesController.add(images);
+      });
     }
-    return images;
   }
 
   Future<String> fetchCardImage(String cardId) async {
-    const platform = MethodChannel('com.example/tcgdex');
     try {
       final Map<dynamic, dynamic> result = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
       final Map<String, dynamic> cardDetails = Map<String, dynamic>.from(result);
@@ -165,8 +163,8 @@ class _MarketPageState extends State<MarketPage> {
               ),
             ),
             const SizedBox(height: 16.0),
-            FutureBuilder<List<String>>(
-              future: wishlistImages,
+            StreamBuilder<List<String>>(
+              stream: _wishlistImagesController.stream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
