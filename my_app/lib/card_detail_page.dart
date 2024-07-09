@@ -45,8 +45,17 @@ class _CardDetailPageState extends State<CardDetailPage> {
         if (isInPortfolio) {
           duplicateCount = doc['duplicateCount'] ?? 1;
           duplicateController.text = duplicateCount.toString();
-          isInWishlist = doc['isInWishlist'] ?? false;
         }
+      });
+
+      DocumentSnapshot wishlistDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('wishlist')
+          .doc(widget.cardId)
+          .get();
+      setState(() {
+        isInWishlist = wishlistDoc.exists;
         isLoading = false;
       });
     }
@@ -96,40 +105,33 @@ class _CardDetailPageState extends State<CardDetailPage> {
   Future<void> toggleWishlistStatus(BuildContext context, bool value) async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentReference docRef = FirebaseFirestore.instance
+      DocumentReference wishlistDocRef = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .collection('portfolio')
+          .collection('wishlist')
           .doc(widget.cardId);
 
       try {
-        if (isInPortfolio) {
-          await docRef.update({
-            'isInWishlist': value,
-          });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Wishlist status updated'),
-          ));
-        } else {
-          await docRef.set({
+        if (value) {
+          await wishlistDocRef.set({
             'cardId': widget.cardId,
             'timestamp': FieldValue.serverTimestamp(),
-            'duplicateCount': duplicateCount,
-            'isInWishlist': value,
           });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Card added to your portfolio with wishlist status'),
+            content: Text('Card added to your wishlist'),
+          ));
+        } else {
+          await wishlistDocRef.delete();
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Card removed from your wishlist'),
           ));
         }
         setState(() {
           isInWishlist = value;
-          if (!isInPortfolio) {
-            isInPortfolio = true;
-          }
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to update wishlist status: $e'),
+          content: Text('Failed to update wishlist: $e'),
         ));
       }
     } else {
@@ -210,7 +212,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   const SizedBox(height: 16),
                   // Add to Portfolio Switch
                   SwitchListTile(
-                    title: const Text('Add to Portfolio'),
+                    title: const Text('Add/Remove to Portfolio'),
                     value: isInPortfolio,
                     onChanged: (value) => togglePortfolioStatus(context, value),
                   ),
@@ -239,7 +241,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   const SizedBox(height: 16),
                   // Wishlist Switch
                   SwitchListTile(
-                    title: const Text('Add to Wishlist'),
+                    title: const Text('Add/Remove to Wishlist'),
                     value: isInWishlist,
                     onChanged: (value) => toggleWishlistStatus(context, value),
                   ),
