@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'card_detail_page.dart';
 
 class PortfolioPage extends StatefulWidget {
   const PortfolioPage({super.key});
@@ -89,6 +90,22 @@ class _PortfolioPageState extends State<PortfolioPage> {
     _fetchCardsBySetId(setId);
   }
 
+  void _onCardClicked(Map<String, dynamic> card) {
+    // Convert the dynamic map to a map of strings
+    final Map<String, String> cardDetails = card.map((key, value) => MapEntry(key.toString(), value.toString()));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CardDetailPage(
+          cardId: card['id'],
+          imageUrl: card['image'],
+          cardDetails: cardDetails,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,7 +114,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           children: [
             ProfileSection(userName: userName),
             SetSymbolsSection(setSymbols: setSymbols, onSetSymbolClicked: _onSetSymbolClicked),
-            CardsGridSection(cards: setCards.isNotEmpty ? setCards : portfolioCards),
+            CardsGridSection(cards: setCards.isNotEmpty ? setCards : portfolioCards, onCardClicked: _onCardClicked),
           ],
         ),
       ),
@@ -171,8 +188,9 @@ class SetSymbolsSection extends StatelessWidget {
 
 class CardsGridSection extends StatelessWidget {
   final List<Map<String, dynamic>> cards;
+  final Function(Map<String, dynamic>) onCardClicked;
 
-  const CardsGridSection({super.key, required this.cards});
+  const CardsGridSection({super.key, required this.cards, required this.onCardClicked});
 
   @override
   Widget build(BuildContext context) {
@@ -190,27 +208,30 @@ class CardsGridSection extends StatelessWidget {
         itemCount: cards.length,
         itemBuilder: (context, index) {
           final card = cards[index];
-          return Card(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-                    child: card['image'] != null
-                        ? Image.network(
-                            card['image'],
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(child: Text('Error loading image'));
-                            },
-                          )
-                        : const Icon(Icons.image, size: 50, color: Colors.grey),
+          return GestureDetector(
+            onTap: () => onCardClicked(card),
+            child: Card(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                      child: card['image'] != null
+                          ? Image.network(
+                              card['image'],
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(child: Text('Error loading image'));
+                              },
+                            )
+                          : const Icon(Icons.image, size: 50, color: Colors.grey),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8.0),
-                Text(card['name'] ?? 'Unknown Card', textAlign: TextAlign.center),
-              ],
+                  const SizedBox(height: 8.0),
+                  Text(card['name'] ?? 'Unknown Card', textAlign: TextAlign.center),
+                ],
+              ),
             ),
           );
         },
