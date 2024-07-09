@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'cart_page.dart';
 import 'listing_page.dart';
@@ -19,7 +21,7 @@ class _MarketPageState extends State<MarketPage> {
   @override
   void initState() {
     super.initState();
-    wishlistImages = fetchRandomCardImages(4); // Fetch 4 images for the wishlist
+    wishlistImages = fetchWishlistImages();
     storefrontImages = fetchRandomCardImages(4); // Fetch 4 images for the storefront
   }
 
@@ -37,6 +39,48 @@ class _MarketPageState extends State<MarketPage> {
     return images;
   }
 
+  Future<List<String>> fetchWishlistImages() async {
+    List<String> images = [];
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('portfolio')
+            .where('isInWishlist', isEqualTo: true)
+            .get();
+
+        for (var doc in snapshot.docs) {
+          final String cardId = doc['cardId'];
+          // Fetch the card details using the cardId
+          final String imageUrl = await fetchCardImage(cardId);
+          if (imageUrl.isNotEmpty) {
+            images.add(imageUrl);
+          }
+        }
+        print("Total wishlist images fetched: ${images.length}");
+      } else {
+        print("No user is currently signed in.");
+      }
+    } catch (e) {
+      print("Failed to fetch wishlist images: $e");
+    }
+    return images;
+  }
+
+  Future<String> fetchCardImage(String cardId) async {
+    const platform = MethodChannel('com.example/tcgdex');
+    try {
+      final Map<dynamic, dynamic> result = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
+      final Map<String, dynamic> cardDetails = Map<String, dynamic>.from(result);
+      return cardDetails['image'] ?? '';
+    } on PlatformException catch (e) {
+      print("Failed to fetch card image: '${e.message}'.");
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +90,7 @@ class _MarketPageState extends State<MarketPage> {
           children: <Widget>[
             const DrawerHeader(
               decoration: BoxDecoration(
-                color:Color(0xFFFF6961),
+                color: Color(0xFFFF6961),
               ),
               child: Text(
                 'Account Menu',
