@@ -227,38 +227,44 @@ class CardsGridSection extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              child: Stack(
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: AspectRatio(
-                          aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-                          child: card['image'] != null
-                              ? Image.network(
-                                  card['image'],
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(child: Text('Error loading image'));
-                                  },
-                                )
-                              : const Icon(Icons.image, size: 50, color: Colors.grey),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                        child: Stack(
+                          children: [
+                            card['image'] != null
+                                ? Image.network(
+                                    card['image'],
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Center(child: Text('Error loading image'));
+                                    },
+                                  )
+                                : const Icon(Icons.image, size: 50, color: Colors.grey),
+                            Positioned(
+                              top: 8.0,
+                              right: 8.0,
+                              child: Icon(
+                                isOwned ? Icons.check_circle : Icons.check_circle_outline,
+                                color: isOwned ? Colors.green : Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8.0),
-                      Text(card['name'] ?? 'Unknown Card', textAlign: TextAlign.center),
-                    ],
-                  ),
-                  Positioned(
-                    top: 8.0,
-                    right: 8.0,
-                    child: Icon(
-                      isOwned ? Icons.check_circle : Icons.check_circle_outline,
-                      color: isOwned ? Colors.green : Colors.grey,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8.0),
+                    Text(
+                      card['name'] ?? 'Unknown Card',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12.0),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
