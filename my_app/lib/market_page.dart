@@ -188,14 +188,11 @@ class CardImageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        final ebayListings = await marketService.fetchEbayListings(listing['cardId']);
-        if (ebayListings.isNotEmpty) {
-          final ebayListingUrl = ebayListings.first['itemWebUrl'];
-          if (await canLaunch(ebayListingUrl)) {
-            await launch(ebayListingUrl);
-          } else {
-            throw 'Could not launch $ebayListingUrl';
-          }
+        final ebayListingUrl = listing['itemWebUrl'];
+        if (await canLaunch(ebayListingUrl)) {
+          await launch(ebayListingUrl);
+        } else {
+          throw 'Could not launch $ebayListingUrl';
         }
       },
       child: Card(
