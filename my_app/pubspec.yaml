@@ -14,14 +14,16 @@ dependencies:
   firebase_auth: ^4.5.0
   cloud_firestore: ^4.7.15
   cupertino_icons: ^1.0.6
-  camera: any
-  path: any
-  path_provider: any
+  camera: ^0.9.4+5
+  path_provider: ^2.0.3
+  path: ^1.8.0
   csv: ^5.0.0
   http: ^1.2.1
   flutter_webview_plugin: ^0.4.0
   flutter_secure_storage: ^5.0.2
   url_launcher: ^6.0.9
+  
+  image_picker: ^0.8.4+4
 
 dev_dependencies:
   flutter_test:
@@ -31,6 +33,6 @@ dev_dependencies:
   flutter_lints: ^4.0.0
 
 flutter:
-  #assets:
-  #  -assets/
   uses-material-design: true
+  assets:
+    - Backend/PokemonCards/downloaded_images/
