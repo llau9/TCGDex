@@ -1,8 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'package:path/path.dart' show join;
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';  // Add this import
+import 'package:path/path.dart';
+import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -15,6 +18,8 @@ class _CameraPageState extends State<CameraPage> {
   late CameraController _controller;
   Future<void>? _initializeControllerFuture;
   String? _imagePath;
+  String? _cardId;
+  Map<String, dynamic>? _cardDetails;
 
   @override
   void initState() {
@@ -23,9 +28,7 @@ class _CameraPageState extends State<CameraPage> {
   }
 
   Future<void> _initializeCamera() async {
-    // Obtain a list of the available cameras on the device.
     final cameras = await availableCameras();
-    // Get a specific camera from the list of available cameras.
     final firstCamera = cameras.first;
 
     _controller = CameraController(
@@ -33,14 +36,12 @@ class _CameraPageState extends State<CameraPage> {
       ResolutionPreset.high,
     );
 
-    // Initialize the controller.
     _initializeControllerFuture = _controller.initialize();
-    setState(() {}); // Trigger a rebuild to update the FutureBuilder
+    setState(() {});
   }
 
   @override
   void dispose() {
-    // Dispose of the controller when the widget is disposed.
     _controller.dispose();
     super.dispose();
   }
@@ -49,20 +50,15 @@ class _CameraPageState extends State<CameraPage> {
     try {
       await _initializeControllerFuture;
 
-      // Construct the path where the image should be saved using the path package.
       final directory = await getTemporaryDirectory();
       final path = join(
         directory.path,
         '${DateTime.now()}.png',
       );
 
-      // Attempt to take a picture and get the file where it's been saved.
       final image = await _controller.takePicture();
-
-      // Save the file to the specified path.
       await image.saveTo(path);
 
-      // If the picture was taken, display it on a new screen.
       setState(() {
         _imagePath = path;
       });
@@ -70,6 +66,12 @@ class _CameraPageState extends State<CameraPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Picture taken!')),
       );
+
+      final cardDetails = await _uploadImage(File(path));
+
+      setState(() {
+        _cardDetails = cardDetails;
+      });
 
     } catch (e) {
       print(e);
@@ -79,25 +81,71 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
+  Future<Map<String, dynamic>?> _uploadImage(File image) async {
+    final url = Uri.parse('http://your_server_ip:5000/identify'); // Update with your server IP
+    final request = http.MultipartRequest('POST', url)
+      ..files.add(await http.MultipartFile.fromPath('image', image.path));
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseData = await http.Response.fromStream(response);
+      final data = jsonDecode(responseData.body);
+      return data;
+    } else {
+      print('Failed to identify card');
+      return null;
+    }
+  }
+
+  Future<void> _pickImageFromGallery(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _imagePath = pickedFile.path;
+      });
+
+      final cardDetails = await _uploadImage(File(pickedFile.path));
+
+      setState(() {
+        _cardDetails = cardDetails;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No image selected.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Remove the AppBar
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             return _imagePath == null
                 ? CameraPreview(_controller)
-                : ImagePreview(imagePath: _imagePath!);
+                : ImagePreview(imagePath: _imagePath!, cardDetails: _cardDetails);
           } else {
             return const Center(child: CircularProgressIndicator());
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.camera),
-        onPressed: () => _takePicture(context),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            child: const Icon(Icons.camera),
+            onPressed: () => _takePicture(context),
+          ),
+          SizedBox(height: 16),
+          FloatingActionButton(
+            child: const Icon(Icons.photo),
+            onPressed: () => _pickImageFromGallery(context),
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -106,16 +154,22 @@ class _CameraPageState extends State<CameraPage> {
 
 class ImagePreview extends StatelessWidget {
   final String imagePath;
+  final Map<String, dynamic>? cardDetails;
 
-  const ImagePreview({super.key, required this.imagePath});
+  const ImagePreview({super.key, required this.imagePath, this.cardDetails});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Expanded(
-          child: Image.file(File(imagePath)), // Use File here
+          child: Image.file(File(imagePath)),
         ),
+        if (cardDetails != null)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('Card Details: ${cardDetails.toString()}'),
+          ),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -129,7 +183,9 @@ class ImagePreview extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  // Implement your image processing logic here
+                  if (cardDetails != null) {
+                    fetchCardDetails(cardDetails!['id'], context);
+                  }
                 },
                 child: const Text('Use this photo'),
               ),
@@ -137,6 +193,30 @@ class ImagePreview extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void fetchCardDetails(String cardId, BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => CardDetailPage(cardId: cardId),
+    ));
+  }
+}
+
+class CardDetailPage extends StatelessWidget {
+  final String cardId;
+
+  const CardDetailPage({super.key, required this.cardId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Card Details'),
+      ),
+      body: Center(
+        child: Text('Card ID: $cardId'),
+      ),
     );
   }
 }
