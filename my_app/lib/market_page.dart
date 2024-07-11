@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'auth_service.dart';
 import 'profile_page.dart';
 import 'cart_page.dart';
 import 'listing_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MarketPage extends StatefulWidget {
   const MarketPage({super.key});
@@ -15,38 +19,27 @@ class MarketPage extends StatefulWidget {
 }
 
 class _MarketPageState extends State<MarketPage> {
-  static const platform = MethodChannel('com.example/tcgdex');
-  late Future<List<String>> storefrontImages;
-  final StreamController<List<String>> _wishlistImagesController = StreamController<List<String>>();
+  final MarketService marketService = MarketService();
+  late Future<List<Map<String, dynamic>>> storefrontListings;
+  final StreamController<List<Map<String, dynamic>>> _wishlistListingsController = StreamController<List<Map<String, dynamic>>>();
+  TextEditingController searchController = TextEditingController();
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    storefrontImages = fetchRandomCardImages(4); // Fetch 4 images for the storefront
-    _fetchWishlistImages();
+    storefrontListings = marketService.fetchEbayListings("pokemon cards storefront"); // Example query for storefront
+    _fetchWishlistListings();
   }
 
   @override
   void dispose() {
-    _wishlistImagesController.close();
+    _wishlistListingsController.close();
+    searchController.dispose();
     super.dispose();
   }
 
-  Future<List<String>> fetchRandomCardImages(int count) async {
-    List<String> images = [];
-    try {
-      for (int i = 0; i < count; i++) {
-        final String result = await platform.invokeMethod('fetchRandomCardImage');
-        images.add(result);
-        print("Fetched card image URL: $result");
-      }
-    } on PlatformException catch (e) {
-      print("Failed to fetch random card image: '${e.message}'.");
-    }
-    return images;
-  }
-
-  Future<void> _fetchWishlistImages() async {
+  Future<void> _fetchWishlistListings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       FirebaseFirestore.instance
@@ -55,76 +48,40 @@ class _MarketPageState extends State<MarketPage> {
           .collection('wishlist')
           .snapshots()
           .listen((snapshot) async {
-        List<String> images = [];
+        List<Map<String, dynamic>> listings = [];
         for (var doc in snapshot.docs) {
+          final String cardName = doc.get('name');
+          final String cardImageUrl = doc.get('imageUrl'); // Assuming imageUrl is stored in Firestore
           final String cardId = doc.id;
-          final String imageUrl = await fetchCardImage(cardId);
-          if (imageUrl.isNotEmpty) {
-            images.add(imageUrl);
-          }
+          final List<Map<String, dynamic>> ebayListings = await marketService.fetchEbayListings(cardName);
+          listings.addAll(ebayListings.map((listing) {
+            listing['cardImageUrl'] = cardImageUrl;
+            listing['cardId'] = cardId;
+            return listing;
+          }));
         }
-        _wishlistImagesController.add(images);
+        _wishlistListingsController.add(listings);
       });
     }
   }
 
-  Future<String> fetchCardImage(String cardId) async {
-    try {
-      final Map<dynamic, dynamic> result = await platform.invokeMethod('fetchCardDetails', {'cardId': cardId});
-      final Map<String, dynamic> cardDetails = Map<String, dynamic>.from(result);
-      return cardDetails['image'] ?? '';
-    } on PlatformException catch (e) {
-      print("Failed to fetch card image: '${e.message}'.");
-      return '';
-    }
+  void _onSearch() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final query = searchController.text;
+    final searchResults = await marketService.fetchEbayListings(query);
+
+    setState(() {
+      storefrontListings = Future.value(searchResults);
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      endDrawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color(0xFFFF6961),
-              ),
-              child: Text(
-                'Account Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('Profile'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {
-                // Handle settings action
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign Out'),
-              onTap: () {
-                // Handle sign out action
-              },
-            ),
-          ],
-        ),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -134,6 +91,7 @@ class _MarketPageState extends State<MarketPage> {
               children: [
                 Expanded(
                   child: TextField(
+                    controller: searchController,
                     decoration: InputDecoration(
                       hintText: 'Search',
                       prefixIcon: const Icon(Icons.search),
@@ -142,6 +100,10 @@ class _MarketPageState extends State<MarketPage> {
                       ),
                     ),
                   ),
+                ),
+                IconButton(
+                  icon: isLoading ? CircularProgressIndicator() : const Icon(Icons.search),
+                  onPressed: _onSearch,
                 ),
                 IconButton(
                   icon: const Icon(Icons.shopping_cart),
@@ -163,20 +125,20 @@ class _MarketPageState extends State<MarketPage> {
               ),
             ),
             const SizedBox(height: 16.0),
-            StreamBuilder<List<String>>(
-              stream: _wishlistImagesController.stream,
+            StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _wishlistListingsController.stream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Text('No card images found');
+                  return const Text('No card listings found');
                 }
-                final images = snapshot.data!;
+                final listings = snapshot.data!;
                 return SizedBox(
                   height: 150.0,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    children: images.map((image) => WishlistCard(imageUrl: image)).toList(),
+                    children: listings.map((listing) => CardImageCard(listing: listing, marketService: marketService)).toList(),
                   ),
                 );
               },
@@ -191,20 +153,20 @@ class _MarketPageState extends State<MarketPage> {
             ),
             const SizedBox(height: 16.0),
             Expanded(
-              child: FutureBuilder<List<String>>(
-                future: storefrontImages,
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: storefrontListings,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No card images found');
+                    return const Text('No storefront listings found');
                   }
-                  final images = snapshot.data!;
+                  final listings = snapshot.data!;
                   return GridView.count(
                     crossAxisCount: 2,
                     crossAxisSpacing: 16.0,
                     mainAxisSpacing: 16.0,
-                    children: images.map((image) => StorefrontCard(imageUrl: image)).toList(),
+                    children: listings.map((listing) => ListingCard(listing: listing)).toList(),
                   );
                 },
               ),
@@ -216,32 +178,53 @@ class _MarketPageState extends State<MarketPage> {
   }
 }
 
-class WishlistCard extends StatelessWidget {
-  final String imageUrl;
+class CardImageCard extends StatelessWidget {
+  final Map<String, dynamic> listing;
+  final MarketService marketService;
 
-  const WishlistCard({super.key, required this.imageUrl});
+  const CardImageCard({super.key, required this.listing, required this.marketService});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ListingPage(imageUrl: imageUrl),
-          ),
-        );
+      onTap: () async {
+        final ebayListings = await marketService.fetchEbayListings(listing['cardId']);
+        if (ebayListings.isNotEmpty) {
+          final ebayListingUrl = ebayListings.first['itemWebUrl'];
+          if (await canLaunch(ebayListingUrl)) {
+            await launch(ebayListingUrl);
+          } else {
+            throw 'Could not launch $ebayListingUrl';
+          }
+        }
       },
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: AspectRatio(
-            aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-            child: imageUrl.isNotEmpty
-                ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Text('Error loading image'));
-                  })
-                : const Center(child: Text('No image URL')),
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                child: listing['cardImageUrl'] != null
+                    ? Image.network(listing['cardImageUrl'], fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
+                        return const Center(child: Text('Error loading image'));
+                      })
+                    : const Center(child: Text('No image URL')),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                listing['title'],
+                style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                '\$${listing['price']['value']}',
+                style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold, color: Colors.green),
+              ),
+            ],
           ),
         ),
       ),
@@ -249,10 +232,10 @@ class WishlistCard extends StatelessWidget {
   }
 }
 
-class StorefrontCard extends StatelessWidget {
-  final String imageUrl;
+class ListingCard extends StatelessWidget {
+  final Map<String, dynamic> listing;
 
-  const StorefrontCard({super.key, required this.imageUrl});
+  const ListingCard({Key? key, required this.listing}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -261,20 +244,37 @@ class StorefrontCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ListingPage(imageUrl: imageUrl),
+            builder: (context) => ListingPage(imageUrl: listing['image']['imageUrl']),
           ),
         );
       },
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: AspectRatio(
-            aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-            child: imageUrl.isNotEmpty
-                ? Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Text('Error loading image'));
-                  })
-                : const Center(child: Text('No image URL')),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                child: listing['image']['imageUrl'] != null
+                    ? Image.network(listing['image']['imageUrl'], fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
+                        return const Center(child: Text('Error loading image'));
+                      })
+                    : const Center(child: Text('No image URL')),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                listing['title'],
+                style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                '\$${listing['price']['value']}',
+                style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold, color: Colors.green),
+              ),
+            ],
           ),
         ),
       ),
