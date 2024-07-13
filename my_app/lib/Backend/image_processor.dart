@@ -41,22 +41,25 @@ class ImagePreprocessor {
     int maxHeight = heightA > heightB ? heightA.round() : heightB.round();
 
     // Define destination points for perspective transform
-    List<Offset> dst = [
-      Offset(0, 0),
-      Offset(maxWidth - 1, 0),
-      Offset(maxWidth - 1, maxHeight - 1),
-      Offset(0, maxHeight - 1),
+    List<cv.Point2f> srcPoints = [
+      cv.Point2f(tl.dx, tl.dy),
+      cv.Point2f(tr.dx, tr.dy),
+      cv.Point2f(br.dx, br.dy),
+      cv.Point2f(bl.dx, bl.dy),
+    ];
+    List<cv.Point2f> dstPoints = [
+      cv.Point2f(0, 0),
+      cv.Point2f(maxWidth - 1.0, 0),
+      cv.Point2f(maxWidth - 1.0, maxHeight - 1.0),
+      cv.Point2f(0, maxHeight - 1.0),
     ];
 
-    // Perform perspective transform using OpenCV
-    List<Offset> srcPoints = rect.map((e) => Offset(e.dx, e.dy)).toList();
-    List<Offset> dstPoints = dst.map((e) => Offset(e.dx, e.dy)).toList();
-
     Uint8List srcBytes = Uint8List.fromList(image.getBytes());
-    var srcMat = await cv.Mat.fromImageData(srcBytes);
-    var dstMat = await cv.warpPerspective(srcMat, srcPoints, dstPoints, cv.Size(maxWidth, maxHeight));
+    var srcMat = cv.imdecode(srcBytes, cv.ImreadModes.IMREAD_COLOR);
+    var transformMatrix = cv.getPerspectiveTransform(srcPoints, dstPoints);
+    var dstMat = cv.warpPerspective(srcMat, transformMatrix, cv.Size(maxWidth, maxHeight));
 
-    Uint8List dstBytes = await dstMat.toImageData();
+    Uint8List dstBytes = cv.imencode(".png", dstMat);
     return img.decodeImage(dstBytes);
   }
 
@@ -64,19 +67,22 @@ class ImagePreprocessor {
     img.Image image = img.decodeImage(imageFile.readAsBytesSync());
 
     // Convert to grayscale and detect edges using OpenCV
-    Uint8List grayBytes = await cv.cvtColor(Uint8List.fromList(image.getBytes()), cv.ColorConversionCodes.COLOR_BGR2GRAY);
-    Uint8List cannyBytes = await cv.Canny(grayBytes, 50, 200);
+    Uint8List grayBytes = cv.cvtColor(Uint8List.fromList(image.getBytes()), cv.ColorConversionCodes.COLOR_BGR2GRAY);
+    Uint8List cannyBytes = cv.Canny(grayBytes, 50, 200);
 
     // Find contours and sort by area
-    List<Offset> contours = await cv.findContours(cannyBytes, cv.ContourRetrievalModes.RETR_EXTERNAL, cv.ContourApproximationModes.CHAIN_APPROX_SIMPLE);
+    var contours = cv.findContours(cannyBytes, cv.RetrievalModes.RETR_EXTERNAL, cv.ContourApproximationModes.CHAIN_APPROX_SIMPLE);
     contours.sort((a, b) => cv.contourArea(b).compareTo(cv.contourArea(a)));
 
     // Get largest contour and approximate polygon
-    List<Offset> largestContour = contours[0];
-    List<Offset> approx = await cv.approxPolyDP(largestContour, 0.02 * cv.arcLength(largestContour, true));
+    var largestContour = contours[0];
+    var approx = cv.approxPolyDP(largestContour, 0.02 * cv.arcLength(largestContour, true));
+
+    // Convert cv.Point to Offset for fourPointTransform
+    List<Offset> approxOffsets = approx.map((p) => Offset(p.x.toDouble(), p.y.toDouble())).toList();
 
     // Warp image based on polygon points
-    img.Image warped = await fourPointTransform(image, approx);
+    img.Image warped = await fourPointTransform(image, approxOffsets);
 
     // Normalize and extract regions
     img.Image normalizedImage = img.copyResize(warped, width: 600, height: 825);
