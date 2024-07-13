@@ -28,7 +28,7 @@ class _MarketPageState extends State<MarketPage> {
   @override
   void initState() {
     super.initState();
-    storefrontListings = marketService.fetchEbayListings("pokemon cards storefront"); // Example query for storefront
+    storefrontListings = marketService.fetchEbayListings("pokemon cards"); // Example query for storefront
     _fetchWishlistListings();
   }
 

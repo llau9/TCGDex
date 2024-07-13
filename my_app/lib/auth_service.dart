@@ -2,11 +2,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class AuthService {
   final String clientId = 'LucasLau-TCGProje-SBX-f941052cf-0995845e';
   final String clientSecret = 'SBX-941052cf3b5a-42c9-4cca-9416-74a1';
-  final String tokenEndpoint = 'https://api.ebay.com/identity/v1/oauth2/token';
+  final String tokenEndpoint = 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
   final storage = FlutterSecureStorage();
 
   Future<String> getAccessToken() async {
@@ -19,8 +18,6 @@ class AuthService {
     final String credentials = '$clientId:$clientSecret';
     final String encodedCredentials = base64Encode(utf8.encode(credentials));
 
-    print('Encoded Credentials: $encodedCredentials'); // Debugging line
-
     final response = await http.post(
       Uri.parse(tokenEndpoint),
       headers: {
@@ -29,9 +26,6 @@ class AuthService {
       },
       body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
     );
-
-    print('Response status code: ${response.statusCode}');
-    print('Response body: ${response.body}'); // Debugging line
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -56,25 +50,29 @@ class MarketService {
   Future<List<Map<String, dynamic>>> fetchEbayListings(String query) async {
     final String accessToken = await authService.getAccessToken();
 
-    print('Using access token: $accessToken'); // Debugging line
-
     final response = await http.get(
       Uri.parse('https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search?q=$query&limit=10'),
       headers: {
-        'Authorization': 'Bearer $accessToken',
+        'Authorization': '$accessToken',
+        'Content-Type': 'application/json',
       },
     );
 
-    print('Response status code: ${response.statusCode}');
-    print('Response body: ${response.body}'); // Debugging line
-
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      print('Fetched eBay listings: ${data['itemSummaries']}');
-      return List<Map<String, dynamic>>.from(data['itemSummaries']);
+      return List<Map<String, dynamic>>.from(data['itemSummaries'] ?? []);
     } else {
-      print('Failed to fetch eBay listings: ${response.body}');
-      throw Exception('Failed to fetch eBay listings');
+      throw Exception('Failed to fetch eBay listings: ${response.body}');
     }
+  }
+}
+
+void main() async {
+  final authService = AuthService();
+  try {
+    final token = await authService.getAccessToken();
+    print('OAuth Token: $token');
+  } catch (e) {
+    print('Error: $e');
   }
 }
