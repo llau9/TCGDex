@@ -140,7 +140,7 @@ class _CameraPageState extends State<CameraPage> {
             child: const Icon(Icons.camera),
             onPressed: () => _takePicture(context),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           FloatingActionButton(
             child: const Icon(Icons.photo),
             onPressed: () => _pickImageFromGallery(context),
@@ -212,7 +212,7 @@ class CardDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Card Details'),
+        title: const Text('Card Details'),
       ),
       body: Center(
         child: Text('Card ID: $cardId'),

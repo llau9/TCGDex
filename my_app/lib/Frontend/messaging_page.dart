@@ -93,14 +93,14 @@ class MessagingPage extends StatelessWidget {
                     color: Colors.grey[800],
                     child: Row(
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: TextField(
                             decoration: InputDecoration(
                               hintText: 'Type a message',
-                              hintStyle: const TextStyle(color: Colors.white54),
+                              hintStyle: TextStyle(color: Colors.white54),
                               border: InputBorder.none,
                             ),
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white),
                           ),
                         ),
                         IconButton(

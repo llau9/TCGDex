@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'auth_service.dart';
-import 'profile_page.dart';
 import 'cart_page.dart';
 import 'listing_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -102,7 +98,7 @@ class _MarketPageState extends State<MarketPage> {
                   ),
                 ),
                 IconButton(
-                  icon: isLoading ? CircularProgressIndicator() : const Icon(Icons.search),
+                  icon: isLoading ? const CircularProgressIndicator() : const Icon(Icons.search),
                   onPressed: _onSearch,
                 ),
                 IconButton(
@@ -110,7 +106,7 @@ class _MarketPageState extends State<MarketPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => CartPage()),
+                      MaterialPageRoute(builder: (context) => const CartPage()),
                     );
                   },
                 ),
@@ -232,7 +228,7 @@ class CardImageCard extends StatelessWidget {
 class ListingCard extends StatelessWidget {
   final Map<String, dynamic> listing;
 
-  const ListingCard({Key? key, required this.listing}) : super(key: key);
+  const ListingCard({super.key, required this.listing});
 
   @override
   Widget build(BuildContext context) {

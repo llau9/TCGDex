@@ -8,11 +8,11 @@ class CardDetailPage extends StatefulWidget {
   final Map<String, String> cardDetails;
 
   const CardDetailPage({
-    Key? key,
+    super.key,
     required this.cardId,
     required this.imageUrl,
     required this.cardDetails,
-  }) : super(key: key);
+  });
 
   @override
   _CardDetailPageState createState() => _CardDetailPageState();
@@ -78,12 +78,12 @@ class _CardDetailPageState extends State<CardDetailPage> {
             'duplicateCount': duplicateCount,
             'isInWishlist': isInWishlist,
           });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Card added to your portfolio'),
           ));
         } else {
           await docRef.delete();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Card removed from your portfolio'),
           ));
         }
@@ -96,7 +96,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
         ));
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('You need to be signed in to update your portfolio'),
       ));
     }
@@ -117,12 +117,12 @@ class _CardDetailPageState extends State<CardDetailPage> {
             'cardId': widget.cardId,
             'timestamp': FieldValue.serverTimestamp(),
           });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Card added to your wishlist'),
           ));
         } else {
           await wishlistDocRef.delete();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Card removed from your wishlist'),
           ));
         }
@@ -135,7 +135,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
         ));
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('You need to be signed in to update your wishlist'),
       ));
     }
@@ -158,7 +158,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
         setState(() {
           duplicateCount = newCount;
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Number of cards updated'),
         ));
       } catch (e) {
@@ -173,10 +173,10 @@ class _CardDetailPageState extends State<CardDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Card Details'),
+        title: const Text('Card Details'),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -194,12 +194,12 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   const SizedBox(height: 16),
                   Text(
                     widget.cardId,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   ListView.builder(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: widget.cardDetails.length,
                     itemBuilder: (context, index) {
                       String key = widget.cardDetails.keys.elementAt(index);
@@ -247,24 +247,24 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   ),
                   const SizedBox(height: 16),
                   // Placeholder for additional details
-                  Text(
+                  const Text(
                     'Additional Details',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  ListTile(
+                  const ListTile(
                     title: Text('Market Price'),
                     subtitle: Text('Fetching data...'),
                   ),
-                  ListTile(
+                  const ListTile(
                     title: Text('Price History'),
                     subtitle: Text('Fetching data...'),
                   ),
-                  ListTile(
+                  const ListTile(
                     title: Text('Latest Sales'),
                     subtitle: Text('Fetching data...'),
                   ),
-                  ListTile(
+                  const ListTile(
                     title: Text('Other Listings'),
                     subtitle: Text('Fetching data...'),
                   ),

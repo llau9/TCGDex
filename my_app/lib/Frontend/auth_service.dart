@@ -6,7 +6,7 @@ class AuthService {
   final String clientId = 'LucasLau-TCGProje-SBX-f941052cf-0995845e';
   final String clientSecret = 'SBX-941052cf3b5a-42c9-4cca-9416-74a1';
   final String tokenEndpoint = 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
 
   Future<String> getAccessToken() async {
     final String? savedToken = await storage.read(key: 'access_token');
@@ -53,7 +53,7 @@ class MarketService {
     final response = await http.get(
       Uri.parse('https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search?q=$query&limit=10'),
       headers: {
-        'Authorization': '$accessToken',
+        'Authorization': accessToken,
         'Content-Type': 'application/json',
       },
     );

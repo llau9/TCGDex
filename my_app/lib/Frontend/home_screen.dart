@@ -23,7 +23,7 @@ class HomeScreenState extends State<HomeScreen> {
   List<String> _setLogos = [];
 
   static final List<Widget> _widgetOptions = <Widget>[
-    HomeContent(logos: []),
+    const HomeContent(logos: []),
     const MarketPage(),
     const CameraPage(),
     const PortfolioPage(),
@@ -62,7 +62,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    List<Widget> _widgetOptionsWithLogos = <Widget>[
+    List<Widget> widgetOptionsWithLogos = <Widget>[
       HomeContent(logos: _setLogos),
       const MarketPage(),
       const CameraPage(),
@@ -155,7 +155,7 @@ class HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _widgetOptionsWithLogos.elementAt(_selectedIndex),
+      body: widgetOptionsWithLogos.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -180,7 +180,7 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFFFFC1C1),
+        selectedItemColor: const Color(0xFFFFC1C1),
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
@@ -192,7 +192,7 @@ class HomeScreenState extends State<HomeScreen> {
 class HomeContent extends StatelessWidget {
   final List<String> logos;
 
-  const HomeContent({Key? key, required this.logos}) : super(key: key);
+  const HomeContent({super.key, required this.logos});
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +202,7 @@ class HomeContent extends StatelessWidget {
     }
     return GridView.builder(
       padding: const EdgeInsets.all(16.0),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 8.0,
         mainAxisSpacing: 8.0,

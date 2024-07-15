@@ -1,11 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:googleapis/vision/v1.dart' as vision;
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
-import 'package:image/image.dart' as img;
 
 class TextExtractor {
   static const _scopes = [vision.VisionApi.cloudVisionScope];

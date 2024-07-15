@@ -18,7 +18,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   List<String> setSymbols = [];
   List<Map<String, dynamic>> portfolioCards = [];
   List<Map<String, dynamic>> setCards = [];
-  Set<String> ownedCardIds = Set<String>();
+  Set<String> ownedCardIds = <String>{};
   List<Map<String, String>> seriesList = [];
 
   @override
@@ -142,10 +142,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
       const platform = MethodChannel('com.example/tcgdex');
       try {
         final List<dynamic> result = await platform.invokeMethod('fetchSerie', {'seriesId': seriesId});
-        final List<String> setSymbols = result.map((dynamic set) => set['symbol'].toString() + ".png").toList();
+        final List<String> setSymbols = result.map((dynamic set) => "${set['symbol']}.png").toList();
         setState(() {
           this.setSymbols = setSymbols;
-          this.setCards = [];
+          setCards = [];
         });
       } on PlatformException catch (e) {
         print("Failed to fetch sets by series ID: '${e.message}'.");
@@ -286,8 +286,8 @@ class SetSymbolsSection extends StatelessWidget {
           if (showRecentlyAdded && index == 0) {
             return GestureDetector(
               onTap: () => onSetSymbolClicked('recently_added'),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
                 child: CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.blue,
@@ -396,7 +396,7 @@ class CardsGridSection extends StatelessWidget {
                     Text(
                       card['name'] ?? 'Unknown Card',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12.0),
+                      style: const TextStyle(fontSize: 12.0),
                     ),
                   ],
                 ),

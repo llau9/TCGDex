@@ -537,7 +537,7 @@ packages:
     source: hosted
     version: "1.0.5"
   opencv_dart:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: opencv_dart
       sha256: "3b92432952a66cf5dcae74a6aa21a2b3dc3055e3c8684e998df7421fbc75b0ff"

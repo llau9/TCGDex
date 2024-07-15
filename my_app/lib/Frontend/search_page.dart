@@ -137,9 +137,9 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 16),
             Expanded(
               child: _searchResults.isEmpty
-                  ? Center(child: Text('No results found'))
+                  ? const Center(child: Text('No results found'))
                   : GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 8.0,
                         mainAxisSpacing: 8.0,
@@ -175,7 +175,7 @@ class _SearchPageState extends State<SearchPage> {
                                   Text(
                                     cardId,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 12.0),
+                                    style: const TextStyle(fontSize: 12.0),
                                   ),
                                 ],
                               ),
