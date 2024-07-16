@@ -544,14 +544,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  opencv_dart:
-    dependency: "direct main"
-    description:
-      name: opencv_dart
-      sha256: "3b92432952a66cf5dcae74a6aa21a2b3dc3055e3c8684e998df7421fbc75b0ff"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
   path:
     dependency: "direct main"
     description:

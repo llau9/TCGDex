@@ -28,8 +28,8 @@ dependencies:
   image: ^4.2.0
   flutter_dotenv: ^5.0.2
 
-  opencv_dart: any
-  flutter_dotenv: ^5.1.0
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
