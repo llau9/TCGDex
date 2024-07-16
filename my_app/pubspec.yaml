@@ -26,8 +26,10 @@ dependencies:
   googleapis: ^13.2.0
   googleapis_auth: ^1.6.0
   image: ^4.2.0
+  flutter_dotenv: ^5.0.2
 
   opencv_dart: any
+  flutter_dotenv: ^5.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -39,3 +41,6 @@ flutter:
   uses-material-design: true
   assets:
     - Backend/PokemonCards/downloaded_images/
+
+assets:
+  assets/.env # path to your .env
