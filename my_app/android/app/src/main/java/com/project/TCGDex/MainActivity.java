@@ -81,6 +81,10 @@ public class MainActivity extends FlutterActivity {
                                 String serieId = call.argument("seriesId");
                                 fetchSerie(serieId, result);
                                 break;
+                            case "preprocessImage":
+                                String imagePath = call.argument("imagePath");
+                                preprocessImage(imagePath, result);
+                                break;
                             default:
                                 result.notImplemented();
                                 break;
@@ -92,6 +96,29 @@ public class MainActivity extends FlutterActivity {
                 }
             );
         loadCSVData();
+    }
+
+    private void preprocessImage(String imagePath, MethodChannel.Result result) {
+        executorService.execute(() -> {
+            try {
+                Mat image = Imgcodecs.imread(imagePath);
+                ImagePreprocessor preprocessor = new ImagePreprocessor();
+                Mat[] regions = preprocessor.isolateRegions(image);
+
+                // For simplicity, we return the size of each region here
+                List<Map<String, Integer>> regionSizes = new ArrayList<>();
+                for (Mat region : regions) {
+                    Map<String, Integer> size = new HashMap<>();
+                    size.put("width", region.width());
+                    size.put("height", region.height());
+                    regionSizes.add(size);
+                }
+                result.success(regionSizes);
+            } catch (Exception e) {
+                Log.e(TAG, "Error preprocessing image", e);
+                result.error("UNAVAILABLE", "Error preprocessing image.", e);
+            }
+        });
     }
 
     private void loadCSVData() {
