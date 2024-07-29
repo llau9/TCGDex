@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -6,8 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
-import 'image_processor.dart'; // Make sure this path is correct
-import 'processed_image_page.dart'; // Import the new page
+import 'package:image_cropper/image_cropper.dart'; // Ensure this path is correct
+import 'text_extractor.dart';
+import 'processed_image_page.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -20,8 +20,8 @@ class _CameraPageState extends State<CameraPage> {
   late CameraController _controller;
   Future<void>? _initializeControllerFuture;
   String? _imagePath;
-  String? _cardId;
   Map<String, dynamic>? _cardDetails;
+  final TextExtractor _textExtractor = TextExtractor(apiKey: 'AIzaSyBU-p3eA5Sxm5Xb5JssbvCDD7k96uIxXFA'); // Replace with your actual API key
 
   @override
   void initState() {
@@ -69,18 +69,7 @@ class _CameraPageState extends State<CameraPage> {
         const SnackBar(content: Text('Picture taken!')),
       );
 
-      final processedImageDetails = await _processImage(File(path));
-
-      setState(() {
-        _cardDetails = processedImageDetails;
-      });
-
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => ProcessedImagePage(
-          imagePath: _imagePath!,
-          processedImageDetails: _cardDetails,
-        ),
-      ));
+      await _cropImage(context, path);
 
     } catch (e) {
       print(e);
@@ -99,7 +88,52 @@ class _CameraPageState extends State<CameraPage> {
         _imagePath = pickedFile.path;
       });
 
-      final processedImageDetails = await _processImage(File(pickedFile.path));
+      await _cropImage(context, pickedFile.path);
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No image selected.')),
+      );
+    }
+  }
+
+    Future<void> _cropImage(BuildContext context, String path) async {
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
+      androidUiSettings: AndroidUiSettings(
+        toolbarTitle: 'Crop Image',
+        toolbarColor: Colors.deepOrange,
+        toolbarWidgetColor: Colors.white,
+        initAspectRatio: CropAspectRatioPreset.original,
+        lockAspectRatio: false,
+      ),
+      iosUiSettings: IOSUiSettings(
+        minimumAspectRatio: 1.0,
+      )
+    );
+
+    if (croppedFile != null) {
+      setState(() {
+        _imagePath = croppedFile.path;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image not cropped.')),
+      );
+    }
+  }
+
+
+  Future<void> _processCroppedImage(BuildContext context) async {
+    if (_imagePath != null) {
+      final processedImageDetails = await _processImage(File(_imagePath!));
 
       setState(() {
         _cardDetails = processedImageDetails;
@@ -113,18 +147,29 @@ class _CameraPageState extends State<CameraPage> {
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No image selected.')),
+        const SnackBar(content: Text('No image selected for processing.')),
       );
     }
   }
 
   Future<Map<String, dynamic>?> _processImage(File image) async {
-    final regionSizes = await ImageProcessor.preprocessImage(image.path);
-    // You can transform regionSizes into a more useful format if needed
-    return {
-      'regions': regionSizes,
-      'imagePath': image.path,
-    };
+    try {
+      final imageBytes = await image.readAsBytes();
+
+      final extractedText = await _textExtractor.extractTextFromName(imageBytes);
+      final extractedHp = await _textExtractor.extractTextFromHp(imageBytes);
+      final extractedMoves = await _textExtractor.extractTextFromMoves(imageBytes);
+
+      return {
+        'name': extractedText,
+        'hp': extractedHp,
+        'moves': extractedMoves,
+        'imagePath': image.path,
+      };
+    } catch (e) {
+      print('Error processing image: $e');
+      return null;
+    }
   }
 
   @override
@@ -136,7 +181,7 @@ class _CameraPageState extends State<CameraPage> {
           if (snapshot.connectionState == ConnectionState.done) {
             return _imagePath == null
                 ? CameraPreview(_controller)
-                : ImagePreview(imagePath: _imagePath!, cardDetails: _cardDetails);
+                : ImagePreview(imagePath: _imagePath!, cardDetails: _cardDetails, onProcess: () => _processCroppedImage(context));
           } else {
             return const Center(child: CircularProgressIndicator());
           }
@@ -164,8 +209,9 @@ class _CameraPageState extends State<CameraPage> {
 class ImagePreview extends StatelessWidget {
   final String imagePath;
   final Map<String, dynamic>? cardDetails;
+  final VoidCallback onProcess;
 
-  const ImagePreview({super.key, required this.imagePath, this.cardDetails});
+  const ImagePreview({super.key, required this.imagePath, this.cardDetails, required this.onProcess});
 
   @override
   Widget build(BuildContext context) {
@@ -186,14 +232,7 @@ class ImagePreview extends StatelessWidget {
                 child: const Text('Retake'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => ProcessedImagePage(
-                      imagePath: imagePath,
-                      processedImageDetails: cardDetails,
-                    ),
-                  ));
-                },
+                onPressed: onProcess,
                 child: const Text('Proceed'),
               ),
             ],

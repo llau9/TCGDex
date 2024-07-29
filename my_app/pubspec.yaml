@@ -27,6 +27,7 @@ dependencies:
   googleapis_auth: ^1.0.0
   image: ^4.2.0
   flutter_dotenv: ^5.0.2
+  image_cropper: ^4.0.1
 
 dev_dependencies:
   flutter_test:
