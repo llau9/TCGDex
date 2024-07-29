@@ -18,17 +18,15 @@ dependencies:
   path_provider: ^2.0.3
   path: ^1.8.0
   csv: ^5.0.0
-  http: ^1.2.1
+  http: ^0.13.6
   flutter_webview_plugin: ^0.4.0
   flutter_secure_storage: ^5.0.2
   url_launcher: ^6.0.9
   image_picker: ^0.8.4+4
-  googleapis: ^13.2.0
-  googleapis_auth: ^1.6.0
+  googleapis: ^7.0.0
+  googleapis_auth: ^1.0.0
   image: ^4.2.0
   flutter_dotenv: ^5.0.2
-
-
 
 dev_dependencies:
   flutter_test:
@@ -40,7 +38,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - Backend/PokemonCards/downloaded_images/
-
-assets:
-  assets/.env # path to your .env
+    - .env
+    - assets/downloaded_images/base3-1.png

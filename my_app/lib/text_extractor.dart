@@ -4,30 +4,36 @@ import 'package:googleapis/vision/v1.dart' as vision;
 import 'package:http/http.dart' as http;
 
 class TextExtractor {
-  static const _scopes = [vision.VisionApi.cloudVisionScope];
-  final String _apiKey;
+  final String apiKey;
 
-  TextExtractor(this._apiKey);
+  TextExtractor({required this.apiKey});
 
-  Future<vision.VisionApi> _initializeVisionApi() async {
-    var client = http.Client();
-    return vision.VisionApi(client);
+  Future<http.Response> _postRequestWithApiKey(vision.BatchAnnotateImagesRequest request) {
+    final uri = Uri.parse('https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode(request.toJson());
+    return http.post(uri, headers: headers, body: body);
   }
 
   Future<String> _extractTextFromImage(Uint8List imageBytes) async {
-    final visionApi = await _initializeVisionApi();
     final visionRequest = vision.AnnotateImageRequest(
       image: vision.Image(content: base64Encode(imageBytes)),
       features: [vision.Feature(type: 'TEXT_DETECTION')],
     );
     final visionBatchRequest = vision.BatchAnnotateImagesRequest(requests: [visionRequest]);
-    final visionBatchResponse = await visionApi.images.annotate(visionBatchRequest);
 
-    final textAnnotations = visionBatchResponse.responses?.first.textAnnotations;
-    if (textAnnotations != null && textAnnotations.isNotEmpty) {
-      return textAnnotations.first.description ?? '';
+    final response = await _postRequestWithApiKey(visionBatchRequest);
+
+    if (response.statusCode == 200) {
+      final visionBatchResponse = vision.BatchAnnotateImagesResponse.fromJson(jsonDecode(response.body));
+      final textAnnotations = visionBatchResponse.responses?.first.textAnnotations;
+      if (textAnnotations != null && textAnnotations.isNotEmpty) {
+        return textAnnotations.first.description ?? '';
+      } else {
+        return '';
+      }
     } else {
-      return '';
+      throw Exception('Failed to extract text from image: ${response.body}');
     }
   }
 
