@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
+import 'image_processor.dart'; // Make sure this path is correct
+import 'processed_image_page.dart'; // Import the new page
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -67,33 +69,24 @@ class _CameraPageState extends State<CameraPage> {
         const SnackBar(content: Text('Picture taken!')),
       );
 
-      final cardDetails = await _uploadImage(File(path));
+      final processedImageDetails = await _processImage(File(path));
 
       setState(() {
-        _cardDetails = cardDetails;
+        _cardDetails = processedImageDetails;
       });
+
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => ProcessedImagePage(
+          imagePath: _imagePath!,
+          processedImageDetails: _cardDetails,
+        ),
+      ));
 
     } catch (e) {
       print(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
-    }
-  }
-
-  Future<Map<String, dynamic>?> _uploadImage(File image) async {
-    final url = Uri.parse('http://your_server_ip:5000/identify'); // Update with your server IP
-    final request = http.MultipartRequest('POST', url)
-      ..files.add(await http.MultipartFile.fromPath('image', image.path));
-
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      final responseData = await http.Response.fromStream(response);
-      final data = jsonDecode(responseData.body);
-      return data;
-    } else {
-      print('Failed to identify card');
-      return null;
     }
   }
 
@@ -106,16 +99,32 @@ class _CameraPageState extends State<CameraPage> {
         _imagePath = pickedFile.path;
       });
 
-      final cardDetails = await _uploadImage(File(pickedFile.path));
+      final processedImageDetails = await _processImage(File(pickedFile.path));
 
       setState(() {
-        _cardDetails = cardDetails;
+        _cardDetails = processedImageDetails;
       });
+
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => ProcessedImagePage(
+          imagePath: _imagePath!,
+          processedImageDetails: _cardDetails,
+        ),
+      ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No image selected.')),
       );
     }
+  }
+
+  Future<Map<String, dynamic>?> _processImage(File image) async {
+    final regionSizes = await ImageProcessor.preprocessImage(image.path);
+    // You can transform regionSizes into a more useful format if needed
+    return {
+      'regions': regionSizes,
+      'imagePath': image.path,
+    };
   }
 
   @override
@@ -165,11 +174,6 @@ class ImagePreview extends StatelessWidget {
         Expanded(
           child: Image.file(File(imagePath)),
         ),
-        if (cardDetails != null)
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('Card Details: ${cardDetails.toString()}'),
-          ),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -183,40 +187,19 @@ class ImagePreview extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  if (cardDetails != null) {
-                    fetchCardDetails(cardDetails!['id'], context);
-                  }
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => ProcessedImagePage(
+                      imagePath: imagePath,
+                      processedImageDetails: cardDetails,
+                    ),
+                  ));
                 },
-                child: const Text('Use this photo'),
+                child: const Text('Proceed'),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  void fetchCardDetails(String cardId, BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => CardDetailPage(cardId: cardId),
-    ));
-  }
-}
-
-class CardDetailPage extends StatelessWidget {
-  final String cardId;
-
-  const CardDetailPage({super.key, required this.cardId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Card Details'),
-      ),
-      body: Center(
-        child: Text('Card ID: $cardId'),
-      ),
     );
   }
 }
