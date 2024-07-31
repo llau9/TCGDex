@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart'; // Ensure this path is correct
+import 'package:image_cropper/image_cropper.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart';
 import 'text_extractor.dart';
 import 'processed_image_page.dart';
 
@@ -97,7 +96,7 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
-    Future<void> _cropImage(BuildContext context, String path) async {
+  Future<void> _cropImage(BuildContext context, String path) async {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: path,
       aspectRatioPresets: [
@@ -107,16 +106,18 @@ class _CameraPageState extends State<CameraPage> {
         CropAspectRatioPreset.ratio4x3,
         CropAspectRatioPreset.ratio16x9
       ],
-      androidUiSettings: AndroidUiSettings(
-        toolbarTitle: 'Crop Image',
-        toolbarColor: Colors.deepOrange,
-        toolbarWidgetColor: Colors.white,
-        initAspectRatio: CropAspectRatioPreset.original,
-        lockAspectRatio: false,
-      ),
-      iosUiSettings: IOSUiSettings(
-        minimumAspectRatio: 1.0,
-      )
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image',
+          toolbarColor: Colors.deepOrange,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          minimumAspectRatio: 1.0,
+        ),
+      ],
     );
 
     if (croppedFile != null) {
@@ -129,7 +130,6 @@ class _CameraPageState extends State<CameraPage> {
       );
     }
   }
-
 
   Future<void> _processCroppedImage(BuildContext context) async {
     if (_imagePath != null) {
