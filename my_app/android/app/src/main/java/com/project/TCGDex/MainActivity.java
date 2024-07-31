@@ -29,6 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Random;
 
 public class MainActivity extends FlutterActivity {
@@ -56,9 +58,9 @@ public class MainActivity extends FlutterActivity {
                                 fetchCardDetails(cardId, result);
                                 break;
                             case "searchCards":
-                                String name = call.argument("name");
-                                Log.d(TAG, "Search name: " + name);
-                                searchCards(name, result);
+                                String filters = call.argument("filters");
+                                Log.d(TAG, "Search filters: " + filters);
+                                searchCards(filters, result);
                                 break;
                             case "isCSVLoaded":
                                 Log.d(TAG, "isCSVLoaded called, returning: " + csvLoaded);
@@ -81,6 +83,11 @@ public class MainActivity extends FlutterActivity {
                                 String serieId = call.argument("seriesId");
                                 fetchSerie(serieId, result);
                                 break;
+                            case "getSuggestions":
+                                String category = call.argument("category");
+                                String query = call.argument("query");
+                                getSuggestions(category, query, result);
+                                break;
                             default:
                                 result.notImplemented();
                                 break;
@@ -100,16 +107,14 @@ public class MainActivity extends FlutterActivity {
             try (InputStream inputStream = getAssets().open("cardAttributes.csv");
                  BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                  CSVReader csvReader = new CSVReader(reader)) {
-                 
+
                 String[] headers = csvReader.readNext();
                 Log.d(TAG, "CSV Headers: " + Arrays.toString(headers));
-                runOnUiThread(() -> Toast.makeText(this, "CSV Headers: " + Arrays.toString(headers), Toast.LENGTH_LONG).show());
 
                 String[] values;
                 while ((values = csvReader.readNext()) != null) {
                     if (values.length != headers.length) {
-                        runOnUiThread(() -> Toast.makeText(this, "Skipping malformed line", Toast.LENGTH_SHORT).show());
-                        Log.d(TAG, "Malformed line: " + Arrays.toString(values));
+                        Log.d(TAG, "Skipping malformed line: " + Arrays.toString(values));
                         continue;
                     }
                     Map<String, String> card = new HashMap<>();
@@ -126,15 +131,27 @@ public class MainActivity extends FlutterActivity {
             } catch (IOException | CsvException e) {
                 Log.e(TAG, "Error reading CSV file", e);
                 runOnUiThread(() -> Toast.makeText(this, "Error reading CSV file: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
-                Log.e(TAG, "Unexpected error while loading CSV", e);
-                runOnUiThread(() -> Toast.makeText(this, "Unexpected error while loading CSV: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
     }
 
+    private void getSuggestions(String category, String query, MethodChannel.Result result) {
+        executorService.execute(() -> {
+            List<String> suggestions = new ArrayList<>();
+            if (csvLoaded && category != null && query != null) {
+                for (Map<String, String> card : cardData) {
+                    String value = card.get(category);
+                    if (value != null && value.toLowerCase().startsWith(query.toLowerCase())) {
+                        suggestions.add(value);
+                    }
+                }
+            }
+            result.success(suggestions);
+        });
+    }
+
     private void fetchRandomCardImage(MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching cards...");
                 CardResume[] cardResumes = api.fetchCards();
@@ -172,7 +189,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private void fetchCardDetails(String cardId, MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching card details for ID: " + cardId);
                 Card card = api.fetchCard(cardId);
@@ -205,15 +222,26 @@ public class MainActivity extends FlutterActivity {
         });
     }
 
-    private void searchCards(String name, MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+    private void searchCards(String filters, MethodChannel.Result result) {
+        executorService.submit(() -> {
+            Map<String, String> filterCriteria = parseFilters(filters);
             List<String> candidateIds = new ArrayList<>();
             synchronized (cardData) {
                 for (Map<String, String> card : cardData) {
-                    String cardName = card.get("name").toLowerCase();
-                    if (cardName.contains(name.toLowerCase())) {
+                    boolean matches = true;
+                    for (Map.Entry<String, String> filter : filterCriteria.entrySet()) {
+                        String key = filter.getKey();
+                        String value = filter.getValue();
+                        String cardValue = card.get(key);
+
+                        // Check if the card attribute value exists and matches the filter value
+                        if (cardValue == null || !cardValue.toLowerCase().contains(value)) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if (matches) {
                         candidateIds.add(card.get("id"));
-                        Log.d(TAG, "Matching card ID: " + card.get("id"));
                     }
                 }
             }
@@ -222,8 +250,19 @@ public class MainActivity extends FlutterActivity {
         });
     }
 
+    private Map<String, String> parseFilters(String filters) {
+        Map<String, String> filterCriteria = new HashMap<>();
+        // Updated regex to handle cases with extra spaces and ensure correct parsing
+        Pattern pattern = Pattern.compile("\\s*([^:]+?)\\s*:\\s*([^,]+?)\\s*(?:,|$)");
+        Matcher matcher = pattern.matcher(filters);
+        while (matcher.find()) {
+            filterCriteria.put(matcher.group(1).trim().toLowerCase(), matcher.group(2).trim().toLowerCase());
+        }
+        return filterCriteria;
+    }
+
     private void fetchAllSetLogos(MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching all sets...");
                 SetResume[] setResumes = api.fetchSets();
@@ -251,7 +290,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private void fetchAllSetSymbols(MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching all sets...");
                 SetResume[] setResumes = api.fetchSets();
@@ -279,7 +318,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private void fetchCardsBySetId(String setId, MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching set for ID: " + setId);
                 Set set = api.fetchSet(setId);
@@ -307,7 +346,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private void fetchSeries(MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching all series...");
                 SerieResume[] seriesResumes = api.fetchSeries();
@@ -334,7 +373,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private void fetchSerie(String serieId, MethodChannel.Result result) {
-        Future<?> future = executorService.submit(() -> {
+        executorService.submit(() -> {
             try {
                 Log.d(TAG, "Fetching serie for ID: " + serieId);
                 Serie serie = api.fetchSerie(serieId);
