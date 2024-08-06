@@ -15,6 +15,7 @@ class MarketPage extends StatefulWidget {
 }
 
 class _MarketPageState extends State<MarketPage> {
+  final bool showComingSoon = true; // Set this to true to show Coming Soon page
   final MarketService marketService = MarketService();
   late Future<List<Map<String, dynamic>>> storefrontListings;
   final StreamController<List<Map<String, dynamic>>> _wishlistListingsController = StreamController<List<Map<String, dynamic>>>();
@@ -77,6 +78,18 @@ class _MarketPageState extends State<MarketPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (showComingSoon) {
+      return Scaffold(
+        body: const Center(
+          child: Text(
+            'This feature is coming soon. Stay tuned!',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),

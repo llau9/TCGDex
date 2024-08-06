@@ -28,6 +28,7 @@ dependencies:
   image: ^4.2.0
   flutter_dotenv: ^5.0.2
   image_cropper: ^4.0.1
+  crop: ^0.5.5  # Added the crop package
 
 dev_dependencies:
   flutter_test:

@@ -187,7 +187,40 @@ class _CameraPageState extends State<CameraPage> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             return _imagePath == null
-                ? CameraPreview(_controller)
+                ? Stack(
+                    children: [
+                      CameraPreview(_controller),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 30.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.photo, color: Colors.white, size: 30),
+                                onPressed: () => _pickImageFromGallery(context),
+                              ),
+                              FloatingActionButton(
+                                onPressed: () => _takePicture(context),
+                                backgroundColor: Colors.red,
+                                shape: CircleBorder(
+                                  side: BorderSide(color: Colors.white, width: 4),
+                                ),
+                                child: const Icon(Icons.camera, color: Colors.white, size: 30),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.flash_on, color: Colors.white, size: 30),
+                                onPressed: () {
+                                  // Toggle flash logic
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
                 : ImagePreview(
                     imagePath: _imagePath!,
                     cardDetails: _cardDetails,
@@ -199,21 +232,6 @@ class _CameraPageState extends State<CameraPage> {
           }
         },
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            child: const Icon(Icons.camera),
-            onPressed: () => _takePicture(context),
-          ),
-          const SizedBox(height: 16),
-          FloatingActionButton(
-            child: const Icon(Icons.photo),
-            onPressed: () => _pickImageFromGallery(context),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

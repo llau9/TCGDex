@@ -5,8 +5,21 @@ class SocialPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool showComingSoon = true; // Set this to true to show Coming Soon page
+
+    if (showComingSoon) {
+      return Scaffold(
+        body: const Center(
+          child: Text(
+            'This feature is coming soon. Stay tuned!',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      // Removed the AppBar from here
       body: ListView.builder(
         itemCount: 10, // Number of posts
         itemBuilder: (context, index) {
