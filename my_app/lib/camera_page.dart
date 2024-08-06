@@ -172,6 +172,13 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
+  void _retakePicture() {
+    setState(() {
+      _imagePath = null;
+    });
+    _initializeCamera(); // Reinitialize the camera when retaking a picture
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -181,7 +188,12 @@ class _CameraPageState extends State<CameraPage> {
           if (snapshot.connectionState == ConnectionState.done) {
             return _imagePath == null
                 ? CameraPreview(_controller)
-                : ImagePreview(imagePath: _imagePath!, cardDetails: _cardDetails, onProcess: () => _processCroppedImage(context));
+                : ImagePreview(
+                    imagePath: _imagePath!,
+                    cardDetails: _cardDetails,
+                    onProcess: () => _processCroppedImage(context),
+                    onRetake: _retakePicture,
+                  );
           } else {
             return const Center(child: CircularProgressIndicator());
           }
@@ -210,8 +222,15 @@ class ImagePreview extends StatelessWidget {
   final String imagePath;
   final Map<String, dynamic>? cardDetails;
   final VoidCallback onProcess;
+  final VoidCallback onRetake;
 
-  const ImagePreview({super.key, required this.imagePath, this.cardDetails, required this.onProcess});
+  const ImagePreview({
+    super.key,
+    required this.imagePath,
+    this.cardDetails,
+    required this.onProcess,
+    required this.onRetake,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -226,9 +245,7 @@ class ImagePreview extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                onPressed: onRetake,
                 child: const Text('Retake'),
               ),
               ElevatedButton(
