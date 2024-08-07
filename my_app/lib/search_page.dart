@@ -89,6 +89,12 @@ class _SearchPageState extends State<SearchPage> {
       return;
     }
 
+    if (_activeFilters.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please apply at least one filter to search')));
+      return;
+    }
+
     try {
       final List<dynamic> results = await platform.invokeMethod('searchCards', {'filters': _activeFilters.join(', ')});
       setState(() {
@@ -287,12 +293,6 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Cards'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _search,
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -328,54 +328,51 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   )
                 : Expanded(
-                    child: _searchResults.isEmpty
-                        ? const Center(child: Text('No results found'))
-                        : GridView.builder(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 8.0,
-                              mainAxisSpacing: 8.0,
-                              childAspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-                            ),
-                            itemCount: _searchResults.length,
-                            itemBuilder: (context, index) {
-                              String cardId = _searchResults[index];
-                              String imageUrl = _cardImages[cardId] ?? '';
-
-                              return GestureDetector(
-                                onTap: () => _navigateToCardDetails(cardId),
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      children: [
-                                        Expanded(
-                                          child: AspectRatio(
-                                            aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
-                                            child: imageUrl.isNotEmpty
-                                                ? Image.network(
-                                                    imageUrl,
-                                                    fit: BoxFit.contain,
-                                                    errorBuilder: (context, error, stackTrace) {
-                                                      return const Center(child: Text('Error loading image'));
-                                                    },
-                                                  )
-                                                : const Center(child: CircularProgressIndicator()),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          cardId,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 12.0),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                    child: _activeFilters.isEmpty
+                        ? const Center(child: Text('Please apply a filter to see results'))
+                        : _searchResults.isEmpty
+                            ? const Center(child: Text('No results found'))
+                            : GridView.builder(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 8.0,
+                                  mainAxisSpacing: 8.0,
+                                  childAspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
                                 ),
-                              );
-                            },
-                          ),
+                                itemCount: _searchResults.length,
+                                itemBuilder: (context, index) {
+                                  String cardId = _searchResults[index];
+                                  String imageUrl = _cardImages[cardId] ?? '';
+
+                                  return GestureDetector(
+                                    onTap: () => _navigateToCardDetails(cardId),
+                                    child: Card(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            Expanded(
+                                              child: AspectRatio(
+                                                aspectRatio: 63 / 88, // Aspect ratio for standard card dimensions
+                                                child: imageUrl.isNotEmpty
+                                                    ? Image.network(
+                                                        imageUrl,
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder: (context, error, stackTrace) {
+                                                          return const Center(child: Text('Error loading image'));
+                                                        },
+                                                      )
+                                                    : const Center(child: CircularProgressIndicator()),
+                                              ),
+                                            ),
+                                            // Removed the card ID text
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                   ),
           ],
         ),
